@@ -1,0 +1,1159 @@
+﻿@{
+    ViewData["Title"] = "Point of Sale - CashFlow";
+    var products = ViewBag.Products as IEnumerable<CashFlow.Core.Entities.Product> ?? new List<CashFlow.Core.Entities.Product>();
+}
+
+<style>
+    /* ===== POS Container ===== */
+    .pos-container {
+        height: calc(100vh - 100px);
+        overflow: hidden;
+        background: #f1f5f9;
+        border-radius: 16px;
+        padding: 16px;
+    }
+
+    /* ===== Left Panel - Product Selection ===== */
+    .product-panel {
+        background: white;
+        border-radius: 12px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+        .product-panel .panel-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+
+            .product-panel .panel-header h5 {
+                font-weight: 600;
+                color: #1e293b;
+                margin: 0;
+                font-size: 1rem;
+            }
+
+                .product-panel .panel-header h5 i {
+                    color: #22c55e;
+                }
+
+    /* Search Bar */
+    .product-search {
+        padding: 10px 16px;
+        border-bottom: 1px solid #e2e8f0;
+        flex-shrink: 0;
+    }
+
+        .product-search .input-group {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+            .product-search .input-group:focus-within {
+                border-color: #22c55e;
+                box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+            }
+
+        .product-search .input-group-text {
+            background: white;
+            border: none;
+            color: #94a3b8;
+            padding: 0 12px;
+            font-size: 0.85rem;
+        }
+
+        .product-search .form-control {
+            border: none;
+            padding: 8px 0;
+            font-size: 0.9rem;
+            height: 38px;
+        }
+
+            .product-search .form-control:focus {
+                box-shadow: none;
+            }
+
+        .product-search .btn-search {
+            background: #0d5c1f;
+            border: none;
+            color: white;
+            padding: 0 16px;
+            border-radius: 0 6px 6px 0 !important;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+        }
+
+            .product-search .btn-search:hover {
+                background: #0a4a16;
+            }
+
+    /* Product Grid */
+    .product-grid-wrapper {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px 12px;
+    }
+
+        .product-grid-wrapper::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .product-grid-wrapper::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .product-grid-wrapper::-webkit-scrollbar-thumb {
+            background: #22c55e;
+            border-radius: 10px;
+        }
+
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 8px;
+    }
+
+    .product-card {
+        background: white;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+        .product-card:hover:not(.out-of-stock) {
+            border-color: #22c55e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.12);
+        }
+
+        .product-card:active:not(.out-of-stock) {
+            transform: scale(0.96);
+        }
+
+        .product-card .product-code {
+            font-size: 0.55rem;
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            background: #f1f5f9;
+            padding: 1px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .product-card .product-name {
+            font-weight: 600;
+            font-size: 0.75rem;
+            margin: 4px 0 2px;
+            color: #1e293b;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .product-card .product-price {
+            color: #0d5c1f;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+            .product-card .product-price small {
+                font-size: 0.6rem;
+                font-weight: 400;
+                color: #94a3b8;
+            }
+
+        .product-card .stock-badge {
+            font-size: 0.5rem;
+            padding: 1px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            display: inline-block;
+            margin-top: 2px;
+        }
+
+        .product-card.out-of-stock {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+            .product-card.out-of-stock .out-of-stock-label {
+                font-size: 0.55rem;
+                color: #dc2626;
+                font-weight: 700;
+                text-transform: uppercase;
+                background: #fee2e2;
+                padding: 1px 8px;
+                border-radius: 4px;
+                display: inline-block;
+                margin-top: 2px;
+            }
+
+    /* No results */
+    .no-results {
+        text-align: center;
+        padding: 40px 20px;
+        color: #94a3b8;
+        width: 100%;
+    }
+
+        .no-results i {
+            font-size: 2.5rem;
+            color: #e2e8f0;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+    /* ===== Right Panel - Cart ===== */
+    .cart-panel {
+        background: white;
+        border-radius: 12px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+        .cart-panel .panel-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .cart-panel .panel-header h5 {
+                font-weight: 600;
+                color: #1e293b;
+                margin: 0;
+                font-size: 1rem;
+            }
+
+                .cart-panel .panel-header h5 i {
+                    color: #22c55e;
+                }
+
+            .cart-panel .panel-header .item-count {
+                background: #22c55e;
+                color: white;
+                padding: 1px 12px;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 600;
+            }
+
+    /* Customer Section */
+    .customer-section {
+        padding: 10px 16px;
+        border-bottom: 1px solid #e2e8f0;
+        flex-shrink: 0;
+        background: #fafbfc;
+    }
+
+        .customer-section .input-group {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1.5px solid #e2e8f0;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+            .customer-section .input-group:focus-within {
+                border-color: #22c55e;
+                box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+            }
+
+        .customer-section .input-group-text {
+            background: white;
+            border: none;
+            color: #94a3b8;
+            padding: 0 10px;
+            font-size: 0.8rem;
+        }
+
+        .customer-section .form-control {
+            border: none;
+            padding: 6px 0;
+            font-size: 0.85rem;
+            height: 32px;
+        }
+
+            .customer-section .form-control:focus {
+                box-shadow: none;
+            }
+
+        .customer-section .btn-find {
+            background: #0d5c1f;
+            border: none;
+            color: white;
+            padding: 0 14px;
+            border-radius: 0 6px 6px 0 !important;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+        }
+
+            .customer-section .btn-find:hover {
+                background: #0a4a16;
+            }
+
+    /* Cart Items */
+    .cart-items-wrapper {
+        flex: 1;
+        overflow-y: auto;
+        padding: 6px 10px;
+    }
+
+        .cart-items-wrapper::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .cart-items-wrapper::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .cart-items-wrapper::-webkit-scrollbar-thumb {
+            background: #22c55e;
+            border-radius: 10px;
+        }
+
+    .cart-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        margin-bottom: 4px;
+        background: white;
+        border: 1px solid #f1f5f9;
+    }
+
+        .cart-item:hover {
+            border-color: #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .cart-item .item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .cart-item .item-name {
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #1e293b;
+        }
+
+        .cart-item .item-code {
+            font-size: 0.6rem;
+            color: #94a3b8;
+        }
+
+        .cart-item .item-price {
+            font-weight: 600;
+            color: #0d5c1f;
+            font-size: 0.8rem;
+            margin-right: 8px;
+        }
+
+        .cart-item .qty-control {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            padding: 2px;
+            margin: 0 8px;
+        }
+
+            .cart-item .qty-control button {
+                width: 24px;
+                height: 24px;
+                border: none;
+                border-radius: 4px;
+                background: white;
+                color: #1e293b;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.8rem;
+            }
+
+                .cart-item .qty-control button:hover {
+                    background: #22c55e;
+                    color: white;
+                }
+
+            .cart-item .qty-control .qty-value {
+                min-width: 20px;
+                text-align: center;
+                font-weight: 600;
+                font-size: 0.8rem;
+                color: #1e293b;
+            }
+
+        .cart-item .item-total {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #0d5c1f;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .cart-item .btn-remove {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            font-size: 0.7rem;
+        }
+
+            .cart-item .btn-remove:hover {
+                color: #dc2626;
+                background: #fee2e2;
+            }
+
+    .cart-empty {
+        text-align: center;
+        padding: 30px 20px;
+        color: #94a3b8;
+    }
+
+        .cart-empty i {
+            font-size: 2.5rem;
+            color: #e2e8f0;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .cart-empty h6 {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+        }
+
+        .cart-empty p {
+            font-size: 0.8rem;
+        }
+
+    /* Cart Totals */
+    .cart-totals {
+        padding: 12px 20px;
+        border-top: 2px solid #e2e8f0;
+        flex-shrink: 0;
+        background: #fafbfc;
+        border-radius: 0 0 12px 12px;
+    }
+
+        .cart-totals .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            font-size: 0.8rem;
+            color: #475569;
+        }
+
+            .cart-totals .total-row.total {
+                font-size: 1.05rem;
+                font-weight: 700;
+                color: #1e293b;
+                border-top: 2px solid #e2e8f0;
+                padding-top: 8px;
+                margin-top: 4px;
+            }
+
+            .cart-totals .total-row .amount {
+                font-weight: 600;
+            }
+
+            .cart-totals .total-row.total .amount {
+                color: #0d5c1f;
+                font-size: 1.2rem;
+            }
+
+    /* Payment Section */
+    .payment-section {
+        padding: 10px 16px 14px;
+        border-top: 1px solid #e2e8f0;
+        flex-shrink: 0;
+        background: #fafbfc;
+        border-radius: 0 0 12px 12px;
+    }
+
+        .payment-section .row {
+            gap: 6px;
+        }
+
+        .payment-section .form-select,
+        .payment-section .form-control {
+            border-radius: 6px;
+            border: 1.5px solid #e2e8f0;
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            height: 34px;
+            transition: all 0.3s ease;
+        }
+
+            .payment-section .form-select:focus,
+            .payment-section .form-control:focus {
+                border-color: #22c55e;
+                box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+            }
+
+        .payment-section .btn-complete {
+            background: #0d5c1f;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: white;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+            .payment-section .btn-complete:hover {
+                background: #0a4a16;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 15px rgba(13, 92, 31, 0.25);
+            }
+
+            .payment-section .btn-complete:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+    /* Change Display */
+    .change-display {
+        padding: 8px 16px;
+        border-radius: 8px;
+        background: #dcfce7;
+        border: 1.5px solid #86efac;
+        display: none;
+        margin-bottom: 8px;
+    }
+
+        .change-display .change-label {
+            font-size: 0.75rem;
+            color: #166534;
+        }
+
+        .change-display .change-amount {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #166534;
+        }
+
+        .change-display.short {
+            background: #fee2e2;
+            border-color: #fca5a5;
+        }
+
+            .change-display.short .change-label,
+            .change-display.short .change-amount {
+                color: #991b1b;
+            }
+
+    /* Customer info */
+    #customerInfo {
+        font-size: 0.8rem;
+    }
+
+    /* Responsive */
+    @@media (max-width: 992px) {
+        .pos-container {
+            height: auto;
+            padding: 12px;
+        }
+
+        .product-panel {
+            height: 350px;
+        }
+
+        .cart-panel {
+            height: 450px;
+        }
+
+        .product-grid {
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .pos-container {
+            padding: 8px;
+        }
+
+        .cart-item {
+            flex-wrap: wrap;
+            padding: 8px;
+        }
+
+            .cart-item .qty-control {
+                margin: 2px 6px;
+            }
+
+            .cart-item .item-total {
+                min-width: 50px;
+                font-size: 0.75rem;
+            }
+
+        .product-grid {
+            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+            gap: 6px;
+        }
+
+        .product-card {
+            padding: 8px 6px;
+        }
+
+            .product-card .product-name {
+                font-size: 0.65rem;
+            }
+
+            .product-card .product-price {
+                font-size: 0.75rem;
+            }
+    }
+</style>
+
+<!-- AntiForgery Token for AJAX -->
+@Html.AntiForgeryToken()
+
+<div class="pos-container">
+    <div class="row g-2 h-100">
+        <!-- Left Panel: Product Selection -->
+        <div class="col-lg-7 h-100">
+            <div class="product-panel">
+                <div class="panel-header">
+                    <h5>
+                        <i class="fas fa-boxes me-2"></i>Products
+                        <span class="badge bg-success ms-2" id="productCount">@products.Count()</span>
+                    </h5>
+                </div>
+                <div class="product-search">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" id="productSearch" class="form-control"
+                               placeholder="Search by name, code, or barcode..." />
+                        <button class="btn-search" onclick="searchProducts()">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="product-grid-wrapper">
+                    <div class="product-grid" id="productGrid">
+                        @foreach (var product in products)
+                        {
+                            var isOutOfStock = product.CurrentStock <= 0;
+                            <div class="product-card @(isOutOfStock ? "out-of-stock" : "")"
+                                 onclick="@(isOutOfStock ? "" : $"addToCart({product.Id})")"
+                                 data-product-id="@product.Id"
+                                 data-name="@product.ItemName"
+                                 data-code="@product.ItemCode"
+                                 data-price="@product.SellingPrice"
+                                 data-stock="@product.CurrentStock">
+                                <div class="product-code">@product.ItemCode</div>
+                                <div class="product-name" title="@product.ItemName">@product.ItemName</div>
+                                <div class="product-price">
+                                    R @product.SellingPrice.ToString("N2")
+                                    @if (!string.IsNullOrEmpty(product.Size))
+                                    {
+                                        <small> / @product.Size</small>
+                                    }
+                                </div>
+                                <div>
+                                    @if (isOutOfStock)
+                                    {
+                                        <span class="out-of-stock-label">Out of Stock</span>
+                                    }
+                                    else if (product.CurrentStock <= product.MinStockAlert)
+                                    {
+                                        <span class="stock-badge bg-warning text-dark">@product.CurrentStock left</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="stock-badge bg-success text-white">In Stock</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Cart -->
+        <div class="col-lg-5 h-100">
+            <div class="cart-panel">
+                <div class="panel-header">
+                    <h5><i class="fas fa-shopping-cart me-2"></i>Cart</h5>
+                    <span class="item-count" id="itemCount">0</span>
+                </div>
+
+                <!-- Customer Section -->
+                <div class="customer-section">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <input type="text" id="customerPhone" class="form-control"
+                               placeholder="Search customer by phone" />
+                        <button class="btn-find" onclick="findCustomer()">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div id="customerInfo" class="mt-1" style="display:none;">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <i class="fas fa-user-circle text-success me-1"></i>
+                                <span id="customerName" class="fw-semibold"></span>
+                            </div>
+                            <div>
+                                <span class="badge bg-info me-1" id="customerPoints"></span>
+                                <span class="badge bg-secondary" id="customerTier"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart Items -->
+                <div class="cart-items-wrapper" id="cartItemsWrapper">
+                    <div id="cartItems">
+                        <div class="cart-empty">
+                            <i class="fas fa-shopping-basket"></i>
+                            <h6>Your cart is empty</h6>
+                            <p class="text-muted">Start adding products to build your order</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Totals -->
+                <div class="cart-totals">
+                    <div class="total-row">
+                        <span>Subtotal</span>
+                        <span class="amount" id="subtotal">R 0.00</span>
+                    </div>
+                    <div class="total-row text-muted">
+                        <span>VAT (15%)</span>
+                        <span class="amount" id="taxAmount">R 0.00</span>
+                    </div>
+                    <div class="total-row text-danger" id="discountRow" style="display:none;">
+                        <span>Discount</span>
+                        <span class="amount" id="discountAmount">- R 0.00</span>
+                    </div>
+                    <div class="total-row total">
+                        <span>Total</span>
+                        <span class="amount" id="totalAmount">R 0.00</span>
+                    </div>
+                </div>
+
+                <!-- Change Display -->
+                <div class="change-display" id="changeDisplay">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="change-label"><i class="fas fa-coins me-1"></i>Change</span>
+                        <span class="change-amount" id="changeAmount">R 0.00</span>
+                    </div>
+                </div>
+
+                <!-- Payment -->
+                <div class="payment-section">
+                    <div class="row">
+                        <div class="col-5">
+                            <select id="paymentMethod" class="form-select">
+                                <option value="Cash">Cash</option>
+                                <option value="Card">Card</option>
+                                <option value="Mobile">Mobile</option>
+                                <option value="Credit">Credit</option>
+                            </select>
+                        </div>
+                        <div class="col-7">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-0 fw-bold text-success">R</span>
+                                <input type="number" id="amountPaid" class="form-control"
+                                       placeholder="Enter amount" step="0.01"
+                                       oninput="calculateChange()" />
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn-complete mt-1" onclick="processSale()" id="completeBtn">
+                        <i class="fas fa-check-circle me-2"></i>Complete Sale
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentCustomerId = null;
+    let discountAmount = 0;
+    let allProducts = [];
+
+    // Get the anti-forgery token
+    function getAntiForgeryToken() {
+        return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+    }
+
+    // Store all products for filtering
+    (function() {
+        var productCards = document.querySelectorAll('.product-card');
+        allProducts = Array.from(productCards).map(function(card) {
+            return {
+                element: card,
+                id: parseInt(card.dataset.productId),
+                name: card.dataset.name ? card.dataset.name.toLowerCase() : '',
+                code: card.dataset.code ? card.dataset.code.toLowerCase() : '',
+                price: parseFloat(card.dataset.price) || 0,
+                stock: parseInt(card.dataset.stock) || 0
+            };
+        });
+    })();
+
+    // Real-time search
+    document.addEventListener('DOMContentLoaded', function() {
+        var searchInput = document.getElementById('productSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                var term = this.value.toLowerCase().trim();
+                filterProducts(term);
+            });
+        }
+    });
+
+    function filterProducts(term) {
+        var grid = document.getElementById('productGrid');
+        if (!grid) return;
+
+        var visibleCount = 0;
+
+        if (!term) {
+            // Show all products
+            allProducts.forEach(function(p) {
+                p.element.style.display = '';
+            });
+            visibleCount = allProducts.length;
+        } else {
+            // Filter products
+            allProducts.forEach(function(p) {
+                var matches = p.name.includes(term) || p.code.includes(term);
+                p.element.style.display = matches ? '' : 'none';
+                if (matches) visibleCount++;
+            });
+        }
+
+        // Show/hide no results message
+        var noResults = grid.querySelector('.no-results');
+        if (visibleCount === 0) {
+            if (!noResults) {
+                grid.innerHTML += `
+                    <div class="no-results">
+                        <i class="fas fa-search"></i>
+                        <h6>No products found</h6>
+                        <p class="text-muted">Try a different search term</p>
+                    </div>
+                `;
+            }
+        } else {
+            if (noResults) noResults.remove();
+        }
+    }
+
+    // Search products (for button click)
+    function searchProducts() {
+        var term = document.getElementById('productSearch').value.toLowerCase().trim();
+        filterProducts(term);
+    }
+
+    // Add to cart
+    function addToCart(productId) {
+        console.log('Adding product to cart:', productId);
+
+        $.ajax({
+            url: '@Url.Action("AddToCart", "POS")',
+            type: 'POST',
+            headers: {
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            data: { productId: productId, quantity: 1 },
+            success: function(response) {
+                console.log('AddToCart response:', response);
+                if (response.success) {
+                    updateCartUI(response);
+                } else {
+                    alert(response.message || 'Failed to add item to cart');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log('AddToCart Error:', error);
+                console.log('Status:', status);
+                console.log('Response:', xhr.responseText);
+                alert('Failed to add item to cart. Please check console for details.');
+            }
+        });
+    }
+
+    // Update quantity
+    function updateQuantity(productId, change) {
+        var input = $('#qty-' + productId);
+        var qty = parseInt(input.val()) + change;
+        if (qty < 1) qty = 1;
+        input.val(qty);
+
+        $.ajax({
+            url: '@Url.Action("UpdateCart", "POS")',
+            type: 'POST',
+            headers: {
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            data: { productId: productId, quantity: qty },
+            success: function(response) {
+                if (response.success) {
+                    updateCartUI(response);
+                }
+            }
+        });
+    }
+
+    // Remove from cart
+    function removeFromCart(productId) {
+        if (!confirm('Remove this item from cart?')) return;
+        $.ajax({
+            url: '@Url.Action("RemoveFromCart", "POS")',
+            type: 'POST',
+            headers: {
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            data: { productId: productId },
+            success: function(response) {
+                if (response.success) {
+                    updateCartUI(response);
+                }
+            }
+        });
+    }
+
+    // Clear cart
+    function clearCart() {
+        if (!confirm('Clear the entire cart?')) return;
+        $.ajax({
+            url: '@Url.Action("ClearCart", "POS")',
+            type: 'POST',
+            headers: {
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                }
+            }
+        });
+    }
+
+    // Find customer
+    function findCustomer() {
+        var phone = $('#customerPhone').val();
+        if (!phone) return;
+
+        $.ajax({
+            url: '@Url.Action("GetCustomer", "POS")',
+            type: 'GET',
+            data: { phone: phone },
+            success: function(response) {
+                if (response.success) {
+                    currentCustomerId = response.customer.id;
+                    $('#customerInfo').show();
+                    $('#customerName').text(response.customer.firstName + ' ' + response.customer.lastName);
+                    $('#customerPoints').text(response.customer.loyaltyPoints + ' pts');
+                    $('#customerTier').text(response.customer.pointsTier);
+                } else {
+                    alert(response.message || 'Customer not found');
+                }
+            }
+        });
+    }
+
+    // Calculate change
+    function calculateChange() {
+        var totalText = $('#totalAmount').text().replace('R ', '').replace(/,/g, '').trim();
+        var total = parseFloat(totalText);
+        var paid = parseFloat($('#amountPaid').val());
+
+        if (paid && paid > 0 && !isNaN(total)) {
+            var change = paid - total;
+            var display = $('#changeDisplay');
+            display.show();
+            if (change >= 0) {
+                display.removeClass('short');
+                $('#changeAmount').text('R ' + change.toFixed(2));
+            } else {
+                display.addClass('short');
+                $('#changeAmount').text('R ' + change.toFixed(2) + ' (Short)');
+            }
+        } else {
+            $('#changeDisplay').hide();
+        }
+    }
+
+    // Update cart UI
+    function updateCartUI(response) {
+        var cart = response.cart;
+        var container = $('#cartItems');
+        container.empty();
+
+        if (!cart || cart.length === 0) {
+            container.html(`
+                <div class="cart-empty">
+                    <i class="fas fa-shopping-basket"></i>
+                    <h6>Your cart is empty</h6>
+                    <p class="text-muted">Start adding products to build your order</p>
+                </div>
+            `);
+        } else {
+            cart.forEach(function(item) {
+                container.append(`
+                    <div class="cart-item">
+                        <div class="item-info">
+                            <div class="item-name">${item.itemName || 'Unknown'}</div>
+                            <div class="item-code">${item.itemCode || ''}</div>
+                        </div>
+                        <div>
+                            <div class="item-price">R ${(item.unitPrice || 0).toFixed(2)}</div>
+                        </div>
+                        <div class="qty-control">
+                            <button onclick="updateQuantity(${item.productId}, -1)">−</button>
+                            <span class="qty-value" id="qty-${item.productId}">${item.quantity || 0}</span>
+                            <button onclick="updateQuantity(${item.productId}, 1)">+</button>
+                        </div>
+                        <div class="item-total">R ${(item.subtotal || 0).toFixed(2)}</div>
+                        <button class="btn-remove" onclick="removeFromCart(${item.productId})" title="Remove">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `);
+            });
+        }
+
+        // Update totals
+        $('#itemCount').text(response.itemCount || 0);
+        $('#subtotal').text('R ' + (response.subtotal || 0).toFixed(2));
+        $('#taxAmount').text('R ' + (response.taxAmount || 0).toFixed(2));
+        if (response.discountAmount > 0) {
+            $('#discountRow').show();
+            $('#discountAmount').text('- R ' + (response.discountAmount || 0).toFixed(2));
+        } else {
+            $('#discountRow').hide();
+        }
+        $('#totalAmount').text('R ' + (response.totalAmount || 0).toFixed(2));
+
+        // Recalculate change
+        calculateChange();
+    }
+
+    // Process sale
+    function processSale() {
+        var amountPaid = parseFloat($('#amountPaid').val());
+        var totalText = $('#totalAmount').text().replace('R ', '').replace(/,/g, '').trim();
+        var total = parseFloat(totalText);
+        var paymentMethod = $('#paymentMethod').val();
+
+        if (isNaN(total) || total <= 0) {
+            alert('Cart is empty. Please add items first.');
+            return;
+        }
+
+        if (!amountPaid || amountPaid < total) {
+            alert('Please enter a valid payment amount that covers the total.');
+            return;
+        }
+
+        var btn = $('#completeBtn');
+        btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Processing...');
+        btn.prop('disabled', true);
+
+        var data = {
+            customerId: currentCustomerId,
+            paymentMethod: paymentMethod,
+            amountPaid: amountPaid,
+            notes: ''
+        };
+
+        $.ajax({
+            url: '@Url.Action("ProcessSale", "POS")',
+            type: 'POST',
+            contentType: 'application/json',
+            headers: {
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            data: JSON.stringify(data),
+            success: function(response) {
+                if (response.success) {
+                    var change = amountPaid - total;
+                    alert(`✅ Sale completed!\n\nInvoice: ${response.invoiceNumber}\nTotal: R ${response.totalAmount.toFixed(2)}\nChange: R ${change.toFixed(2)}`);
+                    location.reload();
+                } else {
+                    alert('❌ Error: ' + response.message);
+                    btn.html('<i class="fas fa-check-circle me-2"></i>Complete Sale');
+                    btn.prop('disabled', false);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log('ProcessSale Error:', error);
+                alert('❌ An error occurred: ' + error);
+                btn.html('<i class="fas fa-check-circle me-2"></i>Complete Sale');
+                btn.prop('disabled', false);
+            }
+        });
+    }
+
+    // Enter key handlers
+    $(document).ready(function() {
+        $('#productSearch').on('keyup', function(e) {
+            if (e.key === 'Enter') searchProducts();
+        });
+
+        $('#customerPhone').on('keyup', function(e) {
+            if (e.key === 'Enter') findCustomer();
+        });
+
+        $('#amountPaid').on('input', function() {
+            calculateChange();
+        });
+
+        // Check for existing cart on load
+        $.ajax({
+            url: '@Url.Action("GetCart", "POS")',
+            type: 'GET',
+            success: function(response) {
+                console.log('GetCart response:', response);
+                if (response && response.cart && response.cart.length > 0) {
+                    updateCartUI(response);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log('GetCart Error:', error);
+                console.log('Response:', xhr.responseText);
+            }
+        });
+    });
+</script>

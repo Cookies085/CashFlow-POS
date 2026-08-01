@@ -1,0 +1,123 @@
+﻿@model CashFlow.Web.ViewModels.StockMovementViewModel
+
+@{
+    ViewData["Title"] = "Stock Movement Details - CashFlow";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-warehouse text-success me-2"></i>Stock Movement Details
+                </h2>
+                <a href="@Url.Action("Index")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back
+                </a>
+            </div>
+            <hr />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="text-muted">Movement Information</h5>
+                            <hr />
+                            <dl class="row">
+                                <dt class="col-sm-5">Product</dt>
+                                <dd class="col-sm-7">
+                                    <strong>@Model.ProductName</strong>
+                                    <br /><span class="text-muted small">@Model.ProductCode</span>
+                                </dd>
+
+                                <dt class="col-sm-5">Movement Type</dt>
+                                <dd class="col-sm-7">
+                                    <span class="badge @(Model.IsAddition ? "bg-success" : "bg-danger")">
+                                        @Model.MovementTypeDisplay
+                                    </span>
+                                </dd>
+
+                                <dt class="col-sm-5">Quantity</dt>
+                                <dd class="col-sm-7 @Model.QuantityColor">
+                                    <strong>@Model.DisplayQuantity</strong>
+                                </dd>
+
+                                <dt class="col-sm-5">Date</dt>
+                                <dd class="col-sm-7">@Model.CreatedAt.ToString("dd MMM yyyy HH:mm")</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-muted">Cost Information</h5>
+                            <hr />
+                            <dl class="row">
+                                <dt class="col-sm-5">Unit Cost</dt>
+                                <dd class="col-sm-7">R @(Model.UnitCost?.ToString("N2") ?? "-")</dd>
+
+                                <dt class="col-sm-5">Unit Price</dt>
+                                <dd class="col-sm-7">R @(Model.UnitPrice?.ToString("N2") ?? "-")</dd>
+                            </dl>
+                            <hr />
+                            <h5 class="text-muted">Additional Info</h5>
+                            <dl class="row">
+                                <dt class="col-sm-5">Reference</dt>
+                                <dd class="col-sm-7">@(Model.Reference ?? "-")</dd>
+
+                                <dt class="col-sm-5">Batch Number</dt>
+                                <dd class="col-sm-7">@(Model.BatchNumber ?? "-")</dd>
+
+                                <dt class="col-sm-5">Expiry Date</dt>
+                                <dd class="col-sm-7">@(Model.ExpiryDate?.ToString("dd MMM yyyy") ?? "-")</dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Notes))
+                    {
+                        <hr />
+                        <h5 class="text-muted">Notes</h5>
+                        <p class="text-muted">@Model.Notes</p>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle text-success me-2"></i>Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="mb-3">
+                            <span class="badge @(Model.IsAddition ? "bg-success" : "bg-danger") p-2 fs-6">
+                                @(Model.IsAddition ? "ADDITION" : "REMOVAL")
+                            </span>
+                        </div>
+                        <h3 class="display-6 @Model.QuantityColor">
+                            @Model.DisplayQuantity
+                        </h3>
+                        <p class="text-muted">units</p>
+                        <hr />
+                        <div class="d-flex justify-content-between">
+                            <span>Product:</span>
+                            <span class="fw-bold">@Model.ProductName</span>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span>Store:</span>
+                            <span>@(Model.StoreName ?? "N/A")</span>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span>Created By:</span>
+                            <span>@Model.CreatedBy</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

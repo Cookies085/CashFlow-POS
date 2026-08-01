@@ -1,0 +1,108 @@
+﻿@model CashFlow.Web.ViewModels.StartShiftViewModel
+
+@{
+    ViewData["Title"] = "Start Shift - CashFlow";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>
+                <i class="fas fa-play-circle text-success me-2"></i>Start Shift
+            </h2>
+            <hr />
+        </div>
+    </div>
+
+    @if (Model.HasOpenShift)
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>You already have an open shift!</strong>
+            <br />
+            <small>
+                Started: @Model.OpenShift?.StartTime.ToString("dd MMM yyyy HH:mm") |
+                Opening Balance: R @Model.OpenShift?.OpeningBalance.ToString("N2")
+            </small>
+            <br />
+            <a href="@Url.Action("End")" class="btn btn-warning btn-sm mt-2">
+                <i class="fas fa-stop me-2"></i>Close Current Shift
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <form asp-action="Start" method="post">
+                            @Html.AntiForgeryToken()
+
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                            <div class="mb-3">
+                                <label asp-for="OpeningBalance" class="form-label fw-semibold"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R</span>
+                                    <input asp-for="OpeningBalance" class="form-control" type="number" step="0.01" />
+                                </div>
+                                <span asp-validation-for="OpeningBalance" class="text-danger small"></span>
+                                <div class="text-muted small mt-1">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Enter the amount of cash in the till at the start of the shift.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Notes" class="form-label fw-semibold"></label>
+                                <textarea asp-for="Notes" class="form-control" rows="3"
+                                          placeholder="Any notes about the start of shift"></textarea>
+                                <span asp-validation-for="Notes" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mt-3">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-play me-2"></i>Start Shift
+                                </button>
+                                <a href="@Url.Action("Index")" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle text-success me-2"></i>Shift Info
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-user text-success me-2"></i>
+                                <strong>Cashier:</strong> @Context.Session.GetString("UserFullName")
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-store text-success me-2"></i>
+                                <strong>Store:</strong> @(Context.Session.GetString("StoreName") ?? "Main Store")
+                            </li>
+                            <li>
+                                <i class="fas fa-calendar text-success me-2"></i>
+                                <strong>Start Time:</strong> @DateTime.Now.ToString("dd MMM yyyy HH:mm")
+                            </li>
+                        </ul>
+                        <hr />
+                        <div class="alert alert-info small mb-0">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Make sure you count the cash in the till before starting.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

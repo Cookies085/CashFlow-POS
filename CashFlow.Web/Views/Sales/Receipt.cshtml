@@ -1,0 +1,242 @@
+﻿@{
+    ViewData["Title"] = "Receipt - CashFlow";
+    var sale = ViewBag.Sale as CashFlow.Core.Entities.Sale;
+    var items = ViewBag.Items as IEnumerable<CashFlow.Core.Entities.SaleItem>;
+    var storeName = ViewBag.StoreName as string ?? "Main Store";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Receipt @sale?.InvoiceNumber</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .receipt {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 1px dashed #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+            .header h2 {
+                margin: 0;
+                font-size: 18px;
+                color: #0d5c1f;
+            }
+
+            .header .subtitle {
+                color: #666;
+                font-size: 10px;
+            }
+
+        .info {
+            border-bottom: 1px dashed #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+            .info .row {
+                display: flex;
+                justify-content: space-between;
+                padding: 2px 0;
+            }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+            table th {
+                text-align: left;
+                border-bottom: 1px solid #ddd;
+                padding: 4px 0;
+                font-size: 10px;
+                text-transform: uppercase;
+            }
+
+            table td {
+                padding: 4px 0;
+            }
+
+                table td:last-child {
+                    text-align: right;
+                }
+
+        .totals {
+            border-top: 1px dashed #ddd;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+            .totals .row {
+                display: flex;
+                justify-content: space-between;
+                padding: 2px 0;
+            }
+
+            .totals .grand-total {
+                font-size: 16px;
+                font-weight: bold;
+                border-top: 2px solid #0d5c1f;
+                padding-top: 8px;
+                margin-top: 8px;
+            }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px dashed #ddd;
+            color: #666;
+            font-size: 10px;
+        }
+
+        .vat {
+            color: #666;
+            font-size: 10px;
+        }
+
+        .btn-print {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 30px;
+            background: #0d5c1f;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+            .btn-print:hover {
+                background: #0a4a16;
+            }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-muted {
+            color: #666;
+        }
+
+        .text-success {
+            color: #0d5c1f;
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt" id="receipt">
+        <div class="header">
+            <h2>💰 CashFlow</h2>
+            <div class="subtitle">@storeName</div>
+            <div class="subtitle">www.cashflow.co.za</div>
+        </div>
+
+        <div class="info">
+            <div class="row">
+                <span>Invoice:</span>
+                <span><strong>@sale?.InvoiceNumber</strong></span>
+            </div>
+            <div class="row">
+                <span>Date:</span>
+                <span>@sale?.SaleDate.ToString("dd MMM yyyy HH:mm")</span>
+            </div>
+            <div class="row">
+                <span>Cashier:</span>
+                <span>@sale?.User?.FullName</span>
+            </div>
+            <div class="row">
+                <span>Customer:</span>
+                <span>@(sale?.CustomerId.HasValue == true ? sale?.Customer?.FirstName + " " + sale?.Customer?.LastName : "Walk-in")</span>
+            </div>
+            <div class="row">
+                <span>Payment:</span>
+                <span>@sale?.PaymentMethod</span>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (items != null)
+                {
+                    @foreach (var item in items)
+                    {
+                        <tr>
+                            <td>@item.Product?.ItemName</td>
+                            <td>@item.Quantity</td>
+                            <td>R @item.UnitPrice.ToString("N2")</td>
+                            <td>R @item.Subtotal.ToString("N2")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+        <div class="totals">
+            <div class="row">
+                <span>Subtotal:</span>
+                <span>R @sale?.TotalAmount.ToString("N2")</span>
+            </div>
+            <div class="row vat">
+                <span>VAT (15%):</span>
+                <span>R @sale?.TaxAmount.ToString("N2")</span>
+            </div>
+            @if (sale?.DiscountAmount > 0)
+            {
+                <div class="row text-danger">
+                    <span>Discount:</span>
+                    <span>- R @sale?.DiscountAmount.ToString("N2")</span>
+                </div>
+            }
+            <div class="row grand-total">
+                <span>TOTAL:</span>
+                <span class="text-success">R @sale?.NetAmount.ToString("N2")</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Thank you for your business!</p>
+            <p>VAT Number: 1234567890</p>
+            <p>© @DateTime.Now.Year CashFlow POS</p>
+        </div>
+    </div>
+
+    <button class="btn-print" onclick="window.print()">
+        <i class="fas fa-print"></i> Print Receipt
+    </button>
+
+    <script>
+        // Auto-print when loaded
+        window.onload = function() {
+            // Uncomment for auto-print:
+            // window.print();
+        };
+    </script>
+</body>
+</html>

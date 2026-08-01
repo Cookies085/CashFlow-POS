@@ -1,0 +1,346 @@
+﻿@model CashFlow.Web.ViewModels.ComingSoonViewModel
+
+@{
+    ViewData["Title"] = @Model.FeatureName + " - Coming Soon - CashFlow";
+    Layout = "_Layout";
+}
+
+<style>
+    .coming-soon-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 200px);
+        padding: 20px;
+    }
+
+    .coming-soon-card {
+        max-width: 700px;
+        width: 100%;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .coming-soon-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(34, 197, 94, 0.05) 0%, transparent 70%);
+            z-index: 0;
+        }
+
+        .coming-soon-card > * {
+            position: relative;
+            z-index: 1;
+        }
+
+    .icon-container {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3.5rem;
+        background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        color: #22c55e;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+        .icon-container.text-primary {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            color: #3b82f6;
+        }
+
+        .icon-container.text-warning {
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            color: #f59e0b;
+        }
+
+        .icon-container.text-info {
+            background: linear-gradient(135deg, #ecfeff, #cffafe);
+            color: #06b6d4;
+        }
+
+        .icon-container.text-danger {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            color: #ef4444;
+        }
+
+        .icon-container.text-secondary {
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            color: #64748b;
+        }
+
+    @@keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    .feature-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: #1e293b;
+    }
+
+        .feature-title .highlight {
+            color: #22c55e;
+        }
+
+    .feature-description {
+        color: #64748b;
+        font-size: 1.1rem;
+        margin-bottom: 25px;
+        line-height: 1.6;
+    }
+
+    .features-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        text-align: left;
+        margin-bottom: 30px;
+    }
+
+        .features-list .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #334155;
+        }
+
+            .features-list .feature-item i {
+                color: #22c55e;
+                font-size: 0.9rem;
+                width: 20px;
+                text-align: center;
+            }
+
+                .features-list .feature-item i.text-primary {
+                    color: #3b82f6;
+                }
+
+                .features-list .feature-item i.text-warning {
+                    color: #f59e0b;
+                }
+
+                .features-list .feature-item i.text-info {
+                    color: #06b6d4;
+                }
+
+                .features-list .feature-item i.text-danger {
+                    color: #ef4444;
+                }
+
+                .features-list .feature-item i.text-secondary {
+                    color: #64748b;
+                }
+
+    .status-badge {
+        display: inline-block;
+        padding: 6px 20px;
+        background: #fef3c7;
+        color: #d97706;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-bottom: 20px;
+    }
+
+        .status-badge i {
+            margin-right: 8px;
+        }
+
+    .release-info {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        margin-bottom: 25px;
+    }
+
+    .btn-notify {
+        background: #0d5c1f;
+        border: none;
+        border-radius: 10px;
+        padding: 14px 40px;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+        .btn-notify:hover {
+            background: #0a4a16;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(13, 92, 31, 0.3);
+            color: white;
+        }
+
+    .btn-back {
+        background: transparent;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 14px 30px;
+        font-weight: 600;
+        color: #64748b;
+        transition: all 0.3s ease;
+        margin-left: 12px;
+    }
+
+        .btn-back:hover {
+            border-color: #94a3b8;
+            color: #1e293b;
+            background: #f8fafc;
+        }
+
+    .rocket-animation {
+        display: inline-block;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @@keyframes float {
+        0%, 100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .coming-soon-card {
+            padding: 30px 20px;
+        }
+
+        .features-list {
+            grid-template-columns: 1fr;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+        }
+
+        .icon-container {
+            width: 80px;
+            height: 80px;
+            font-size: 2.5rem;
+        }
+
+        .btn-notify, .btn-back {
+            display: block;
+            width: 100%;
+            margin: 8px 0;
+            text-align: center;
+        }
+
+        .btn-back {
+            margin-left: 0;
+        }
+    }
+</style>
+
+<div class="coming-soon-container">
+    <div class="coming-soon-card">
+        <!-- Icon -->
+        <div class="icon-container text-@Model.Color">
+            <i class="fas @Model.Icon rocket-animation"></i>
+        </div>
+
+        <!-- Status Badge -->
+        <div class="status-badge">
+            <i class="fas fa-hourglass-half"></i> Coming Soon
+        </div>
+
+        <!-- Title -->
+        <h1 class="feature-title">
+            @Model.FeatureName
+            <br />
+            <span class="highlight">is on its way!</span>
+        </h1>
+
+        <!-- Description -->
+        <p class="feature-description">
+            @Model.Description
+        </p>
+
+        <!-- Features -->
+        @if (Model.Features.Any())
+        {
+            <div class="features-list">
+                @foreach (var feature in Model.Features)
+                {
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle text-@Model.Color"></i>
+                        <span>@feature</span>
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- Release Info -->
+        @if (Model.EstimatedRelease.HasValue)
+        {
+            <p class="release-info">
+                <i class="fas fa-calendar-alt me-2"></i>
+                Estimated release: <strong>@Model.EstimatedRelease.Value.ToString("MMMM yyyy")</strong>
+            </p>
+        }
+
+        <!-- Buttons -->
+        <div>
+            <button class="btn btn-notify" onclick="showNotification()">
+                <i class="fas fa-bell me-2"></i>Notify Me When Ready
+            </button>
+            <a href="@Url.Action("Index", "Home")" class="btn btn-back">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showNotification() {
+        // Check if browser supports notifications
+        if (!("Notification" in window)) {
+            alert("Thank you! We'll notify you when @Model.FeatureName is ready.");
+            return;
+        }
+
+        // Request permission if not granted
+        if (Notification.permission === "granted") {
+            alert("You're already subscribed! We'll notify you when @Model.FeatureName is ready.");
+        } else if (Notification.permission === "denied") {
+            alert("Please enable notifications in your browser settings to get notified.");
+        } else {
+            Notification.requestPermission().then(function(permission) {
+                if (permission === "granted") {
+                    new Notification("CashFlow POS", {
+                        body: "You'll be notified when @Model.FeatureName is ready!",
+                        icon: "/favicon.ico"
+                    });
+                    alert("Thank you! We'll notify you when @Model.FeatureName is ready.");
+                } else {
+                    alert("Thank you! We'll notify you when @Model.FeatureName is ready.");
+                }
+            });
+        }
+    }
+</script>

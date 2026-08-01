@@ -1,0 +1,368 @@
+﻿@model CashFlow.Web.ViewModels.SettingsViewModel
+
+@{
+    ViewData["Title"] = "Settings - CashFlow";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>
+                <i class="fas fa-sliders-h text-success me-2"></i>System Settings
+            </h2>
+            <hr />
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (Model.IsSuccess && !string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@Model.Message
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-12">
+            <form asp-action="Index" method="post">
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <!-- Tabs -->
+                <ul class="nav nav-tabs mb-3" id="settingsTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="store-tab" data-bs-toggle="tab" data-bs-target="#store" type="button" role="tab">
+                            <i class="fas fa-store me-2"></i>Store
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="company-tab" data-bs-toggle="tab" data-bs-target="#company" type="button" role="tab">
+                            <i class="fas fa-building me-2"></i>Company
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tax-tab" data-bs-toggle="tab" data-bs-target="#tax" type="button" role="tab">
+                            <i class="fas fa-percent me-2"></i>Tax
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="receipt-tab" data-bs-toggle="tab" data-bs-target="#receipt" type="button" role="tab">
+                            <i class="fas fa-receipt me-2"></i>Receipt
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="currency-tab" data-bs-toggle="tab" data-bs-target="#currency" type="button" role="tab">
+                            <i class="fas fa-money-bill-wave me-2"></i>Currency
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="theme-tab" data-bs-toggle="tab" data-bs-target="#theme" type="button" role="tab">
+                            <i class="fas fa-palette me-2"></i>Theme
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="settingsTabsContent">
+                    <!-- Store Settings -->
+                    <div class="tab-pane fade show active" id="store" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0"><i class="fas fa-store text-success me-2"></i>Store Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="StoreName" class="form-label fw-semibold"></label>
+                                        <input asp-for="StoreName" class="form-control" placeholder="Store name" />
+                                        <span asp-validation-for="StoreName" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="StoreCode" class="form-label fw-semibold"></label>
+                                        <input asp-for="StoreCode" class="form-control" placeholder="JHB001" />
+                                        <span asp-validation-for="StoreCode" class="text-danger small"></span>
+                                        <div class="text-muted small mt-1">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Unique code for this store (e.g., JHB001, CPT002)
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="StorePhone" class="form-label fw-semibold"></label>
+                                        <input asp-for="StorePhone" class="form-control" placeholder="+27 12 345 6789" />
+                                        <span asp-validation-for="StorePhone" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="StoreEmail" class="form-label fw-semibold"></label>
+                                        <input asp-for="StoreEmail" class="form-control" placeholder="store@email.com" type="email" />
+                                        <span asp-validation-for="StoreEmail" class="text-danger small"></span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="StoreAddress" class="form-label fw-semibold"></label>
+                                    <textarea asp-for="StoreAddress" class="form-control" rows="2" placeholder="Physical address"></textarea>
+                                    <span asp-validation-for="StoreAddress" class="text-danger small"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="StoreLogo" class="form-label fw-semibold"></label>
+                                    <input asp-for="StoreLogo" class="form-control" placeholder="Logo URL (optional)" />
+                                    <span asp-validation-for="StoreLogo" class="text-danger small"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Company Settings -->
+                    <div class="tab-pane fade" id="company" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0"><i class="fas fa-building text-success me-2"></i>Company Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="CompanyName" class="form-label fw-semibold"></label>
+                                        <input asp-for="CompanyName" class="form-control" placeholder="Company name" />
+                                        <span asp-validation-for="CompanyName" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="RegistrationNumber" class="form-label fw-semibold"></label>
+                                        <input asp-for="RegistrationNumber" class="form-control" placeholder="Business registration number" />
+                                        <span asp-validation-for="RegistrationNumber" class="text-danger small"></span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="VatNumber" class="form-label fw-semibold"></label>
+                                        <input asp-for="VatNumber" class="form-control" placeholder="VAT registration number" />
+                                        <span asp-validation-for="VatNumber" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="CompanyAddress" class="form-label fw-semibold"></label>
+                                        <textarea asp-for="CompanyAddress" class="form-control" rows="2" placeholder="Company address"></textarea>
+                                        <span asp-validation-for="CompanyAddress" class="text-danger small"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tax Settings -->
+                    <div class="tab-pane fade" id="tax" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0"><i class="fas fa-percent text-success me-2"></i>Tax Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label asp-for="VatRate" class="form-label fw-semibold"></label>
+                                        <div class="input-group">
+                                            <input asp-for="VatRate" class="form-control" type="number" step="0.01" />
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <span asp-validation-for="VatRate" class="text-danger small"></span>
+                                        <div class="text-muted small mt-1">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            South Africa VAT rate is 15%
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label asp-for="TaxMethod" class="form-label fw-semibold"></label>
+                                        <select asp-for="TaxMethod" class="form-select">
+                                            <option value="Inclusive">Inclusive (VAT included in price)</option>
+                                            <option value="Exclusive">Exclusive (VAT added to price)</option>
+                                        </select>
+                                        <span asp-validation-for="TaxMethod" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label asp-for="TaxNumberLabel" class="form-label fw-semibold"></label>
+                                        <input asp-for="TaxNumberLabel" class="form-control" placeholder="VAT Number" />
+                                        <span asp-validation-for="TaxNumberLabel" class="text-danger small"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Receipt Settings -->
+                    <div class="tab-pane fade" id="receipt" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0"><i class="fas fa-receipt text-success me-2"></i>Receipt Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="ReceiptHeader" class="form-label fw-semibold"></label>
+                                        <input asp-for="ReceiptHeader" class="form-control" placeholder="Thank you for your business!" />
+                                        <span asp-validation-for="ReceiptHeader" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="ReceiptFooter" class="form-label fw-semibold"></label>
+                                        <input asp-for="ReceiptFooter" class="form-control" placeholder="Visit us again!" />
+                                        <span asp-validation-for="ReceiptFooter" class="text-danger small"></span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label asp-for="ReceiptPaperSize" class="form-label fw-semibold"></label>
+                                        <select asp-for="ReceiptPaperSize" class="form-select">
+                                            <option value="58mm">58mm (Thermal)</option>
+                                            <option value="80mm" selected>80mm (Thermal)</option>
+                                            <option value="A4">A4</option>
+                                            <option value="A5">A5</option>
+                                        </select>
+                                        <span asp-validation-for="ReceiptPaperSize" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="form-check form-switch mt-4">
+                                            <input asp-for="ShowLogoOnReceipt" class="form-check-input" type="checkbox" />
+                                            <label asp-for="ShowLogoOnReceipt" class="form-check-label"></label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="form-check form-switch mt-4">
+                                            <input asp-for="ShowBarcodeOnReceipt" class="form-check-input" type="checkbox" />
+                                            <label asp-for="ShowBarcodeOnReceipt" class="form-check-label"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Currency Settings -->
+                    <div class="tab-pane fade" id="currency" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0"><i class="fas fa-money-bill-wave text-success me-2"></i>Currency Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3 mb-3">
+                                        <label asp-for="CurrencySymbol" class="form-label fw-semibold"></label>
+                                        <input asp-for="CurrencySymbol" class="form-control" placeholder="R" />
+                                        <span asp-validation-for="CurrencySymbol" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label asp-for="CurrencyCode" class="form-label fw-semibold"></label>
+                                        <input asp-for="CurrencyCode" class="form-control" placeholder="ZAR" />
+                                        <span asp-validation-for="CurrencyCode" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label asp-for="DecimalPlaces" class="form-label fw-semibold"></label>
+                                        <input asp-for="DecimalPlaces" class="form-control" type="number" min="0" max="4" />
+                                        <span asp-validation-for="DecimalPlaces" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label asp-for="CurrencyFormat" class="form-label fw-semibold"></label>
+                                        <select asp-for="CurrencyFormat" class="form-select">
+                                            <option value="SymbolFirst">Symbol First (R 100.00)</option>
+                                            <option value="SymbolLast">Symbol Last (100.00 R)</option>
+                                        </select>
+                                        <span asp-validation-for="CurrencyFormat" class="text-danger small"></span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="ThousandsSeparator" class="form-label fw-semibold"></label>
+                                        <input asp-for="ThousandsSeparator" class="form-control" placeholder="," maxlength="1" />
+                                        <span asp-validation-for="ThousandsSeparator" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="DecimalSeparator" class="form-label fw-semibold"></label>
+                                        <input asp-for="DecimalSeparator" class="form-control" placeholder="." maxlength="1" />
+                                        <span asp-validation-for="DecimalSeparator" class="text-danger small"></span>
+                                    </div>
+                                </div>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Example:</strong>
+                                    @{
+                                        var example = $"R 1,234.56";
+                                        if (Model.CurrencyFormat == "SymbolLast") example = $"1,234.56 R";
+                                        if (Model.ThousandsSeparator == ".") example = example.Replace(",", ".");
+                                        if (Model.DecimalSeparator == ",") example = example.Replace(".", ",");
+                                    }
+                                    @example
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Theme Settings -->
+                    <div class="tab-pane fade" id="theme" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0"><i class="fas fa-palette text-success me-2"></i>Theme Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="ThemeMode" class="form-label fw-semibold"></label>
+                                        <select asp-for="ThemeMode" class="form-select">
+                                            <option value="light">Light</option>
+                                            <option value="dark">Dark</option>
+                                            <option value="auto">Auto (System Preference)</option>
+                                        </select>
+                                        <span asp-validation-for="ThemeMode" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="PrimaryColor" class="form-label fw-semibold"></label>
+                                        <div class="input-group">
+                                            <input asp-for="PrimaryColor" class="form-control" type="color" style="padding: 2px; width: 50px;" />
+                                            <span class="input-group-text">@Model.PrimaryColor</span>
+                                        </div>
+                                        <span asp-validation-for="PrimaryColor" class="text-danger small"></span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="AccentColor" class="form-label fw-semibold"></label>
+                                        <div class="input-group">
+                                            <input asp-for="AccentColor" class="form-control" type="color" style="padding: 2px; width: 50px;" />
+                                            <span class="input-group-text">@Model.AccentColor</span>
+                                        </div>
+                                        <span asp-validation-for="AccentColor" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="SidebarColor" class="form-label fw-semibold"></label>
+                                        <div class="input-group">
+                                            <input asp-for="SidebarColor" class="form-control" type="color" style="padding: 2px; width: 50px;" />
+                                            <span class="input-group-text">@Model.SidebarColor</span>
+                                        </div>
+                                        <span asp-validation-for="SidebarColor" class="text-danger small"></span>
+                                    </div>
+                                </div>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-paint-brush me-2"></i>
+                                    <strong>Live Preview:</strong> Changes will apply immediately after saving.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-2"></i>Save All Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}

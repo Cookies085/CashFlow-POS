@@ -1,0 +1,156 @@
+﻿@model CashFlow.Web.ViewModels.CustomerViewModel
+
+@{
+    ViewData["Title"] = "Customer Details - CashFlow";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-user text-success me-2"></i>Customer Details
+                </h2>
+                <div>
+                    <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i>Edit
+                    </a>
+                    <a href="@Url.Action("Index")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back
+                    </a>
+                </div>
+            </div>
+            <hr />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="text-muted">Personal Information</h5>
+                            <hr />
+                            <dl class="row">
+                                <dt class="col-sm-4">Full Name</dt>
+                                <dd class="col-sm-8"><strong>@Model.FullName</strong></dd>
+
+                                <dt class="col-sm-4">Phone</dt>
+                                <dd class="col-sm-8">@Model.Phone</dd>
+
+                                <dt class="col-sm-4">Email</dt>
+                                <dd class="col-sm-8">@(Model.Email ?? "-")</dd>
+
+                                <dt class="col-sm-4">Address</dt>
+                                <dd class="col-sm-8">@(Model.Address ?? "-")</dd>
+
+                                <dt class="col-sm-4">Date of Birth</dt>
+                                <dd class="col-sm-8">@(Model.DateOfBirth?.ToString("dd MMM yyyy") ?? "-")</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-muted">Loyalty Information</h5>
+                            <hr />
+                            <dl class="row">
+                                <dt class="col-sm-4">Loyalty Points</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge bg-info fs-6">@Model.LoyaltyPoints</span>
+                                </dd>
+
+                                <dt class="col-sm-4">Tier</dt>
+                                <dd class="col-sm-8">
+                                    @{
+                                        var tierColor = Model.PointsTier.ToLower() switch
+                                        {
+                                            "platinum" => "bg-purple text-white",
+                                            "gold" => "bg-warning text-dark",
+                                            "silver" => "bg-secondary text-white",
+                                            _ => "bg-bronze text-white"
+                                        };
+                                    }
+                                    <span class="badge @tierColor fs-6">@Model.PointsTier</span>
+                                </dd>
+
+                                <dt class="col-sm-4">Total Spent</dt>
+                                <dd class="col-sm-8"><strong>R @Model.TotalSpent.ToString("N2")</strong></dd>
+
+                                <dt class="col-sm-4">Last Purchase</dt>
+                                <dd class="col-sm-8">@(Model.LastPurchaseDate?.ToString("dd MMM yyyy") ?? "Never")</dd>
+
+                                <dt class="col-sm-4">Status</dt>
+                                <dd class="col-sm-8">
+                                    @if (Model.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Notes))
+                    {
+                        <hr />
+                        <h5 class="text-muted">Notes</h5>
+                        <p class="text-muted">@Model.Notes</p>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shopping-bag text-success me-2"></i>Purchase History
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <h3 class="display-6">@ViewBag.TotalSales</h3>
+                        <p class="text-muted">Total Purchases</p>
+                    </div>
+                    <hr />
+                    <div class="text-center">
+                        <p class="text-muted small">Recent purchases will appear here</p>
+                        <a href="#" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-history me-2"></i>View All
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-gift text-success me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <a href="@Url.Action("Index", "POS")?customer=@Model.Phone" class="btn btn-success w-100 mb-2">
+                        <i class="fas fa-shopping-cart me-2"></i>Start Sale
+                    </a>
+                    <button class="btn btn-outline-info w-100" onclick="alert('Send SMS to customer')">
+                        <i class="fas fa-sms me-2"></i>Send SMS
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-bronze {
+        background-color: #cd7f32;
+        color: white;
+    }
+
+    .bg-purple {
+        background-color: #6b21a5;
+        color: white;
+    }
+</style>

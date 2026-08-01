@@ -1,0 +1,252 @@
+﻿@model CashFlow.Web.ViewModels.SaleDetailsViewModel
+
+@{
+    ViewData["Title"] = "Sale Details - CashFlow";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-receipt text-success me-2"></i>Sale Details
+                </h2>
+                <div>
+                    <a href="@Url.Action("Receipt", new { id = Model.Id })" class="btn btn-outline-secondary">
+                        <i class="fas fa-print me-2"></i>Print
+                    </a>
+                    <a href="@Url.Action("Index")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back
+                    </a>
+                </div>
+            </div>
+            <hr />
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Sale Info -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle text-success me-2"></i>Sale Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-5">Invoice Number</dt>
+                                <dd class="col-sm-7"><strong>@Model.InvoiceNumber</strong></dd>
+
+                                <dt class="col-sm-5">Date & Time</dt>
+                                <dd class="col-sm-7">@Model.SaleDate.ToString("dd MMM yyyy HH:mm")</dd>
+
+                                <dt class="col-sm-5">Cashier</dt>
+                                <dd class="col-sm-7">@Model.CashierName</dd>
+
+                                <dt class="col-sm-5">Payment Method</dt>
+                                <dd class="col-sm-7">@Model.PaymentMethod</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-5">Customer</dt>
+                                <dd class="col-sm-7">
+                                    <strong>@Model.CustomerName</strong>
+                                    @if (!string.IsNullOrEmpty(Model.CustomerPhone))
+                                    {
+                                        <br />
+                                    
+                                        <small class="text-muted">@Model.CustomerPhone</small>
+                                    }
+                                    @if (!string.IsNullOrEmpty(Model.CustomerEmail))
+                                    {
+                                        <br />
+                                    
+                                        <small class="text-muted">@Model.CustomerEmail</small>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-5">Status</dt>
+                                <dd class="col-sm-7">
+                                    @if (Model.PaymentStatus == "Voided")
+                                    {
+                                        <span class="badge bg-danger">Voided</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Paid</span>
+                                    }
+                                </dd>
+
+                                @if (!string.IsNullOrEmpty(Model.Notes))
+                                {
+                                    <dt class="col-sm-5">Notes</dt>
+                                    <dd class="col-sm-7 text-muted">@Model.Notes</dd>
+                                }
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm bg-success text-white">
+                <div class="card-body text-center">
+                    <p class="mb-0 text-white-50">Total Amount</p>
+                    <h2 class="mb-0">R @Model.NetAmount.ToString("N2")</h2>
+                    <hr class="border-light" />
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <small class="text-white-50">Subtotal</small>
+                            <div>R @Model.TotalAmount.ToString("N2")</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-white-50">VAT</small>
+                            <div>R @Model.TaxAmount.ToString("N2")</div>
+                        </div>
+                    </div>
+                    @if (Model.DiscountAmount > 0)
+                    {
+                        <div class="text-center mt-2">
+                            <small class="text-white-50">Discount</small>
+                            <div class="text-warning">- R @Model.DiscountAmount.ToString("N2")</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Items -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list text-success me-2"></i>Items
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Item</th>
+                                    <th class="text-center">Qty</th>
+                                    <th class="text-end">Unit Price</th>
+                                    <th class="text-end">Tax</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Items)
+                                {
+                                    <tr>
+                                        <td>@item.ItemCode</td>
+                                        <td>@item.ItemName</td>
+                                        <td class="text-center">@item.Quantity</td>
+                                        <td class="text-end">R @item.UnitPrice.ToString("N2")</td>
+                                        <td class="text-end text-muted">R @item.TaxAmount.ToString("N2")</td>
+                                        <td class="text-end text-success fw-bold">R @item.Subtotal.ToString("N2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="5" class="text-end fw-bold">Subtotal:</td>
+                                    <td class="text-end fw-bold">R @Model.TotalAmount.ToString("N2")</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="5" class="text-end">VAT:</td>
+                                    <td class="text-end">R @Model.TaxAmount.ToString("N2")</td>
+                                </tr>
+                                @if (Model.DiscountAmount > 0)
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-end text-danger">Discount:</td>
+                                        <td class="text-end text-danger">- R @Model.DiscountAmount.ToString("N2")</td>
+                                    </tr>
+                                }
+                                <tr>
+                                    <td colspan="5" class="text-end fw-bold fs-5">Total:</td>
+                                    <td class="text-end fw-bold fs-5 text-success">R @Model.NetAmount.ToString("N2")</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    @if (Model.PaymentStatus != "Voided")
+    {
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow-sm border-danger">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                                <span class="text-danger fw-bold">Void this sale</span>
+                                <span class="text-muted ms-2">This will restore stock and cancel the transaction.</span>
+                            </div>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#voidConfirmModal">
+                                <i class="fas fa-ban me-2"></i>Void Sale
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Void Confirmation Modal -->
+<div class="modal fade" id="voidConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>Confirm Void
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to void this sale?</p>
+                <p class="text-danger small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    This will:
+                    <ul class="text-danger small">
+                        <li>Cancel the transaction</li>
+                        <li>Restore all stock</li>
+                        <li>This action cannot be undone</li>
+                    </ul>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form asp-action="Void" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-ban me-2"></i>Yes, Void Sale
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

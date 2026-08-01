@@ -1,0 +1,77 @@
+﻿@model CashFlow.Web.ViewModels.UserViewModel
+
+@{
+    ViewData["Title"] = "Delete User - CashFlow";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>
+                <i class="fas fa-user-times text-danger me-2"></i>Delete User
+            </h2>
+            <hr />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Warning!</strong> Are you sure you want to deactivate this user?
+                        <br /><small class="text-muted">This action can be reversed by activating the user again.</small>
+                    </div>
+
+                    <dl class="row">
+                        <dt class="col-sm-3">Full Name</dt>
+                        <dd class="col-sm-9">@Model.FullName</dd>
+
+                        <dt class="col-sm-3">Username</dt>
+                        <dd class="col-sm-9">@Model.Username</dd>
+
+                        <dt class="col-sm-3">Email</dt>
+                        <dd class="col-sm-9">@Model.Email</dd>
+
+                        <dt class="col-sm-3">Role</dt>
+                        <dd class="col-sm-9">
+                            <span class="badge @(Model.Role.ToString() == "SuperAdmin" ? "bg-danger" :
+                                                                                  Model.Role.ToString() == "Admin" ? "bg-primary" :
+                                                                                  Model.Role.ToString() == "Manager" ? "bg-warning" :
+                                                                                  Model.Role.ToString() == "Cashier" ? "bg-info" : "bg-secondary")">
+                                @Model.Role
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-3">Status</dt>
+                        <dd class="col-sm-9">
+                            @if (Model.IsActive)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Inactive</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-3">Last Login</dt>
+                        <dd class="col-sm-9">@(Model.LastLoginAt?.ToString("dd MMM yyyy HH:mm") ?? "Never")</dd>
+                    </dl>
+
+                    <form asp-action="Delete" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>Confirm Deactivate
+                        </button>
+                        <a href="@Url.Action("Index")" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

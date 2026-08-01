@@ -1,0 +1,134 @@
+﻿@model CashFlow.Web.ViewModels.UserViewModel
+
+@{
+    ViewData["Title"] = "Add User - CashFlow";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>
+                <i class="fas fa-user-plus text-success me-2"></i>Add New User
+            </h2>
+            <hr />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FullName" class="form-label fw-semibold"></label>
+                                <input asp-for="FullName" class="form-control" placeholder="Full name" />
+                                <span asp-validation-for="FullName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Username" class="form-label fw-semibold"></label>
+                                <input asp-for="Username" class="form-control" placeholder="Username" />
+                                <span asp-validation-for="Username" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label fw-semibold"></label>
+                            <input asp-for="Email" class="form-control" placeholder="user@email.com" type="email" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Password" class="form-label fw-semibold"></label>
+                                <input asp-for="Password" class="form-control" type="password" placeholder="Minimum 6 characters" />
+                                <span asp-validation-for="Password" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ConfirmPassword" class="form-label fw-semibold"></label>
+                                <input asp-for="ConfirmPassword" class="form-control" type="password" placeholder="Confirm password" />
+                                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Role" class="form-label fw-semibold"></label>
+                                <select asp-for="Role" class="form-select">
+                                    <option value="SuperAdmin">Super Admin</option>
+                                    <option value="Admin">Admin</option>
+                                    <option value="Manager">Manager</option>
+                                    <option value="Cashier" selected>Cashier</option>
+                                    <option value="Viewer">Viewer</option>
+                                </select>
+                                <span asp-validation-for="Role" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="StoreId" class="form-label fw-semibold"></label>
+                                <select asp-for="StoreId" class="form-select">
+                                    <option value="">All Stores</option>
+                                    @foreach (var store in ViewBag.Stores as IEnumerable<CashFlow.Core.Entities.Store> ?? new List<CashFlow.Core.Entities.Store>())
+                                    {
+                                        <option value="@store.Id">@store.Name</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="StoreId" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input asp-for="IsActive" class="form-check-input" />
+                            <label asp-for="IsActive" class="form-check-label"></label>
+                        </div>
+
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-2"></i>Create User
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle text-success me-2"></i>User Roles
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <span class="badge bg-danger">SuperAdmin</span>
+                            - Full access to everything, all stores
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-primary">Admin</span>
+                            - Full access to assigned store
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-warning">Manager</span>
+                            - Access to all except user management
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-info">Cashier</span>
+                            - Limited to POS and assigned store
+                        </li>
+                        <li>
+                            <span class="badge bg-secondary">Viewer</span>
+                            - Read-only access to reports
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

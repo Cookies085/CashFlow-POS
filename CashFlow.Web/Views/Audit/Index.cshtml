@@ -1,0 +1,212 @@
+﻿@model CashFlow.Web.ViewModels.AuditListViewModel
+
+@{
+    ViewData["Title"] = "Audit Log - CashFlow";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-clipboard-list text-success me-2"></i>Audit Log
+                </h2>
+                <div>
+                    <a href="@Url.Action("Export", new { searchTerm = Model.SearchTerm, actionFilter = Model.ActionFilter, entityFilter = Model.EntityFilter, userIdFilter = Model.UserIdFilter, dateFrom = Model.DateFrom, dateTo = Model.DateTo })"
+                       class="btn btn-success">
+                        <i class="fas fa-file-export me-2"></i>Export
+                    </a>
+                </div>
+            </div>
+            <hr />
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Filters -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Search</label>
+                            <input type="text" name="searchTerm" class="form-control"
+                                   placeholder="Search description, entity..."
+                                   value="@ViewBag.SearchTerm" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Action</label>
+                            <select name="actionFilter" class="form-select">
+                                <option value="">All</option>
+                                @foreach (var action in ViewBag.Actions as List<string> ?? new List<string>())
+                                {
+                                    <option value="@action" selected="@(ViewBag.CurrentAction == action)">
+                                        @action
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Entity</label>
+                            <select name="entityFilter" class="form-select">
+                                <option value="">All</option>
+                                @foreach (var entity in ViewBag.Entities as List<string> ?? new List<string>())
+                                {
+                                    <option value="@entity" selected="@(ViewBag.CurrentEntity == entity)">
+                                        @entity
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">User</label>
+                            <select name="userIdFilter" class="form-select">
+                                <option value="">All</option>
+                                @foreach (var user in ViewBag.Users as IEnumerable<CashFlow.Core.Entities.User> ?? new List<CashFlow.Core.Entities.User>())
+                                {
+                                    <option value="@user.Id" selected="@(ViewBag.CurrentUserId == user.Id)">
+                                        @user.FullName
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-filter me-2"></i>Filter
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                                <i class="fas fa-redo me-2"></i>Clear
+                            </a>
+                            <span class="ms-2 text-muted">Total: @Model.TotalCount</span>
+                        </div>
+                    </form>
+                    <div class="row mt-2">
+                        <div class="col-md-4">
+                            <label class="form-label">Date From</label>
+                            <input type="date" name="dateFrom" class="form-control" value="@(Model.DateFrom?.ToString("yyyy-MM-dd"))" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Date To</label>
+                            <input type="date" name="dateTo" class="form-control" value="@(Model.DateTo?.ToString("yyyy-MM-dd"))" />
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-outline-success w-100">
+                                <i class="fas fa-calendar me-2"></i>Apply Date Range
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Entity</th>
+                                    <th>Description</th>
+                                    <th>IP Address</th>
+                                    <th style="width: 100px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.Audits.Any())
+                                {
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4 text-muted">
+                                            <i class="fas fa-clipboard-list fa-2x d-block mb-2"></i>
+                                            No audit records found.
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var audit in Model.Audits)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <span class="small">@audit.Timestamp.ToString("dd MMM yyyy HH:mm:ss")</span>
+                                            </td>
+                                            <td>
+                                                <div class="fw-bold small">@audit.UserFullName</div>
+                                                <div class="text-muted small">@audit.UserName</div>
+                                            </td>
+                                            <td>
+                                                <span class="badge @audit.ActionBadgeColor">@audit.Action</span>
+                                            </td>
+                                            <td>@audit.Entity</td>
+                                            <td>
+                                                <span class="small">@audit.Description</span>
+                                                @if (!string.IsNullOrEmpty(audit.Reference))
+                                                {
+                                                    <br />
+                                                    <span class="text-muted small">Ref: @audit.Reference</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="small">@audit.IpAddress</span>
+                                            </td>
+                                            <td>
+                                                <a href="@Url.Action("Details", new { id = audit.Id })"
+                                                   class="btn btn-sm btn-outline-info" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @if (Model.TotalPages > 1)
+                {
+                    <div class="card-footer">
+                        <nav aria-label="Audit pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link"
+                                       href="@Url.Action("Index", new { page = Model.CurrentPage - 1, searchTerm = Model.SearchTerm, actionFilter = Model.ActionFilter, entityFilter = Model.EntityFilter, userIdFilter = Model.UserIdFilter, dateFrom = Model.DateFrom, dateTo = Model.DateTo })">
+                                        Previous
+                                    </a>
+                                </li>
+                                @for (int i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                        <a class="page-link"
+                                           href="@Url.Action("Index", new { page = i, searchTerm = Model.SearchTerm, actionFilter = Model.ActionFilter, entityFilter = Model.EntityFilter, userIdFilter = Model.UserIdFilter, dateFrom = Model.DateFrom, dateTo = Model.DateTo })">
+                                            @i
+                                        </a>
+                                    </li>
+                                }
+                                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link"
+                                       href="@Url.Action("Index", new { page = Model.CurrentPage + 1, searchTerm = Model.SearchTerm, actionFilter = Model.ActionFilter, entityFilter = Model.EntityFilter, userIdFilter = Model.UserIdFilter, dateFrom = Model.DateFrom, dateTo = Model.DateTo })">
+                                        Next
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

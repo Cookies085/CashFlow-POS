@@ -1,0 +1,176 @@
+﻿@model CashFlow.Web.ViewModels.SupplierListViewModel
+
+@{
+    ViewData["Title"] = "Suppliers - CashFlow";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-truck text-success me-2"></i>Suppliers
+                </h2>
+                <a href="@Url.Action("Create")" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Add Supplier
+                </a>
+            </div>
+            <hr />
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Search -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-md-6">
+                            <label class="form-label">Search</label>
+                            <div class="input-group">
+                                <input type="text" name="searchTerm" class="form-control"
+                                       placeholder="Search by name, contact, email, or phone..."
+                                       value="@ViewBag.SearchTerm" />
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-secondary w-100">
+                                <i class="fas fa-filter me-2"></i>Filter
+                            </button>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo me-2"></i>Clear
+                            </a>
+                            <span class="ms-2 text-muted">Total: @Model.TotalCount</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suppliers Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Contact Person</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Products</th>
+                                    <th>Status</th>
+                                    <th style="width: 150px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.Suppliers.Any())
+                                {
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4 text-muted">
+                                            <i class="fas fa-truck fa-2x d-block mb-2"></i>
+                                            No suppliers found. Click "Add Supplier" to create one.
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var supplier in Model.Suppliers)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@supplier.Name</strong>
+                                            </td>
+                                            <td>@(supplier.ContactPerson ?? "-")</td>
+                                            <td>@(supplier.Phone ?? "-")</td>
+                                            <td>@(supplier.Email ?? "-")</td>
+                                            <td>
+                                                <span class="badge bg-info">@supplier.ProductCount</span>
+                                                @if (!string.IsNullOrEmpty(supplier.ProductNames))
+                                                {
+                                                    <div class="text-muted small">@supplier.ProductNames</div>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (supplier.IsActive)
+                                                {
+                                                    <span class="badge bg-success">Active</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="@Url.Action("Details", new { id = supplier.Id })"
+                                                       class="btn btn-outline-info" title="View">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="@Url.Action("Edit", new { id = supplier.Id })"
+                                                       class="btn btn-outline-primary" title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="@Url.Action("Delete", new { id = supplier.Id })"
+                                                       class="btn btn-outline-danger" title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @if (Model.TotalPages > 1)
+                {
+                    <div class="card-footer">
+                        <nav aria-label="Supplier pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link"
+                                       href="@Url.Action("Index", new { page = Model.CurrentPage - 1, searchTerm = Model.SearchTerm })">
+                                        Previous
+                                    </a>
+                                </li>
+                                @for (int i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                        <a class="page-link"
+                                           href="@Url.Action("Index", new { page = i, searchTerm = Model.SearchTerm })">
+                                            @i
+                                        </a>
+                                    </li>
+                                }
+                                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link"
+                                       href="@Url.Action("Index", new { page = Model.CurrentPage + 1, searchTerm = Model.SearchTerm })">
+                                        Next
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

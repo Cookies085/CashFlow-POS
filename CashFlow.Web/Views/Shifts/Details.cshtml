@@ -1,0 +1,234 @@
+﻿@model CashFlow.Web.ViewModels.ShiftViewModel
+
+@{
+    ViewData["Title"] = "Shift Details - CashFlow";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-clock text-success me-2"></i>Shift Details
+                </h2>
+                <a href="@Url.Action("Index")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back
+                </a>
+            </div>
+            <hr />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Shift Info -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="text-muted">Shift Information</h5>
+                            <hr />
+                            <dl class="row">
+                                <dt class="col-sm-4">Cashier</dt>
+                                <dd class="col-sm-8">@Model.CashierName</dd>
+
+                                <dt class="col-sm-4">Store</dt>
+                                <dd class="col-sm-8">@Model.StoreName</dd>
+
+                                <dt class="col-sm-4">Start Time</dt>
+                                <dd class="col-sm-8">@Model.StartTime.ToString("dd MMM yyyy HH:mm")</dd>
+
+                                <dt class="col-sm-4">End Time</dt>
+                                <dd class="col-sm-8">@(Model.EndTime?.ToString("dd MMM yyyy HH:mm") ?? "-")</dd>
+
+                                <dt class="col-sm-4">Duration</dt>
+                                <dd class="col-sm-8">@(Model.Duration ?? "-")</dd>
+
+                                <dt class="col-sm-4">Status</dt>
+                                <dd class="col-sm-8">
+                                    @if (Model.Status == "Open")
+                                    {
+                                        <span class="badge bg-warning text-dark">Open</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Closed</span>
+                                    }
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-muted">Financial Summary</h5>
+                            <hr />
+                            <dl class="row">
+                                <dt class="col-sm-4">Opening Balance</dt>
+                                <dd class="col-sm-8">R @Model.OpeningBalance.ToString("N2")</dd>
+
+                                @if (Model.Status == "Closed")
+                                {
+                                    <dt class="col-sm-4">Closing Balance</dt>
+                                    <dd class="col-sm-8">R @Model.ClosingBalance?.ToString("N2")</dd>
+
+                                    <dt class="col-sm-4">Expected Balance</dt>
+                                    <dd class="col-sm-8">R @Model.ExpectedBalance?.ToString("N2")</dd>
+
+                                    <dt class="col-sm-4">Difference</dt>
+                                    <dd class="col-sm-8 @(Model.Difference >= 0 ? "text-success" : "text-danger")">
+                                        R @Model.Difference?.ToString("N2")
+                                        @if (Model.Difference >= 0)
+                                        {
+                                            <span class="badge bg-success">Over</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Short</span>
+                                        }
+                                    </dd>
+                                }
+
+                                <dt class="col-sm-4">Total Orders</dt>
+                                <dd class="col-sm-8">@Model.TotalOrders</dd>
+
+                                <dt class="col-sm-4">Total Sales</dt>
+                                <dd class="col-sm-8 text-success fw-bold">R @Model.TotalSales.ToString("N2")</dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Notes))
+                    {
+                        <hr />
+                        <h5 class="text-muted">Notes</h5>
+                        <p class="text-muted">@Model.Notes</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Sales Breakdown -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie text-success me-2"></i>Sales Breakdown
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Payment Method</th>
+                                        <th class="text-end">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Cash</td>
+                                        <td class="text-end">R @Model.TotalCashSales.ToString("N2")</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Card</td>
+                                        <td class="text-end">R @Model.TotalCardSales.ToString("N2")</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Mobile</td>
+                                        <td class="text-end">R @Model.TotalMobileSales.ToString("N2")</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Credit</td>
+                                        <td class="text-end">R @Model.TotalCreditSales.ToString("N2")</td>
+                                    </tr>
+                                    <tr class="table-success">
+                                        <td><strong>Total</strong></td>
+                                        <td class="text-end fw-bold">R @Model.TotalSales.ToString("N2")</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <canvas id="paymentChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-receipt text-success me-2"></i>Recent Sales
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        @if (ViewBag.Sales == null || !((IEnumerable<CashFlow.Core.Entities.Sale>)ViewBag.Sales).Any())
+                        {
+                            <div class="list-group-item text-center text-muted py-3">
+                                No sales during this shift
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var sale in (IEnumerable<CashFlow.Core.Entities.Sale>)ViewBag.Sales)
+                            {
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-bold small">@sale.InvoiceNumber</div>
+                                        <div class="text-muted small">@sale.SaleDate.ToString("HH:mm")</div>
+                                    </div>
+                                    <span class="text-success">R @sale.NetAmount.ToString("N2")</span>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // Payment Chart
+    const ctx = document.getElementById('paymentChart').getContext('2d');
+    const paymentData = {
+        labels: ['Cash', 'Card', 'Mobile', 'Credit'],
+        values: [
+            @Model.TotalCashSales,
+            @Model.TotalCardSales,
+            @Model.TotalMobileSales,
+            @Model.TotalCreditSales
+        ]
+    };
+
+    const colors = {
+        'Cash': '#22c55e',
+        'Card': '#3b82f6',
+        'Mobile': '#f59e0b',
+        'Credit': '#8b5cf6'
+    };
+
+    const backgroundColors = paymentData.labels.map(label => colors[label] || '#94a3b8');
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: paymentData.labels,
+            datasets: [{
+                data: paymentData.values,
+                backgroundColor: backgroundColors,
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+</script>

@@ -1,0 +1,422 @@
+﻿@model CashFlow.Web.ViewModels.ReportViewModel
+
+@{
+    ViewData["Title"] = "Reports - CashFlow";
+}
+
+<link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css" rel="stylesheet" />
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-chart-bar text-success me-2"></i>Reports
+                </h2>
+                <div>
+                    <a href="@Url.Action("ExportPDF", new { reportType = Model.ReportType, period = Model.Period, dateFrom = Model.DateFrom, dateTo = Model.DateTo, paymentMethod = Model.PaymentMethod })"
+                       class="btn btn-danger">
+                        <i class="fas fa-file-pdf me-2"></i>Export PDF
+                    </a>
+                </div>
+            </div>
+            <hr />
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="post" class="row g-3 align-items-end">
+                        @Html.AntiForgeryToken()
+
+                        <div class="col-md-2">
+                            <label class="form-label">Report Type</label>
+                            <select name="ReportType" class="form-select" id="reportType">
+                                @foreach (var type in ViewBag.ReportTypes as List<string> ?? new List<string>())
+                                {
+                                    <option value="@type" selected="@(Model.ReportType == type)">
+                                        @type
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Period</label>
+                            <select name="Period" class="form-select">
+                                @foreach (var period in ViewBag.Periods as List<string> ?? new List<string>())
+                                {
+                                    <option value="@period" selected="@(Model.Period == period)">
+                                        @period
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Date From</label>
+                            <input type="date" name="DateFrom" class="form-control" value="@(Model.DateFrom?.ToString("yyyy-MM-dd"))" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Date To</label>
+                            <input type="date" name="DateTo" class="form-control" value="@(Model.DateTo?.ToString("yyyy-MM-dd"))" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Payment Method</label>
+                            <select name="PaymentMethod" class="form-select">
+                                <option value="">All</option>
+                                @foreach (var method in ViewBag.PaymentMethods as List<string> ?? new List<string>())
+                                {
+                                    <option value="@method" selected="@(Model.PaymentMethod == method)">
+                                        @method
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-sync me-2"></i>Generate
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm border-0 bg-success text-white">
+                <div class="card-body">
+                    <p class="mb-0 text-white-50">Total Revenue</p>
+                    <h3 class="mb-0">R @Model.TotalRevenue.ToString("N2")</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm border-0 bg-primary text-white">
+                <div class="card-body">
+                    <p class="mb-0 text-white-50">Total Orders</p>
+                    <h3 class="mb-0">@Model.TotalOrders</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm border-0 bg-warning text-dark">
+                <div class="card-body">
+                    <p class="mb-0 text-dark-50">Average Order</p>
+                    <h3 class="mb-0">R @Model.AverageOrderValue.ToString("N2")</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm border-0 bg-info text-white">
+                <div class="card-body">
+                    <p class="mb-0 text-white-50">Total Profit</p>
+                    <h3 class="mb-0">R @Model.TotalProfit.ToString("N2")</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line text-success me-2"></i>Revenue Trend (@Model.Period)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie text-success me-2"></i>Payment Methods
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="paymentChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Chart -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-boxes text-success me-2"></i>Top Products
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="productChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table text-success me-2"></i>Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Total Revenue</strong></td>
+                                <td class="text-end text-success">R @Model.TotalRevenue.ToString("N2")</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Tax</strong></td>
+                                <td class="text-end">R @Model.TotalTax.ToString("N2")</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Discount</strong></td>
+                                <td class="text-end text-danger">R @Model.TotalDiscount.ToString("N2")</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Cost</strong></td>
+                                <td class="text-end">R @Model.TotalCost.ToString("N2")</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Profit</strong></td>
+                                <td class="text-end text-success">R @Model.TotalProfit.ToString("N2")</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Profit Margin</strong></td>
+                                <td class="text-end">
+                                    @(Model.TotalRevenue > 0 ? (Model.TotalProfit / Model.TotalRevenue * 100).ToString("N1") : "0.0")%
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list text-success me-2"></i>@Model.ReportType Details
+                    </h5>
+                    <span class="text-muted small">@Model.Rows.Count records</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    @if (Model.ReportType == "Sales")
+                                    {
+                                        <th>Date</th>
+                                        <th>Invoice</th>
+                                        <th>Customer</th>
+                                        <th class="text-end">Amount</th>
+                                        <th>Payment</th>
+                                    }
+                                    else if (Model.ReportType == "Products" || Model.ReportType == "Profit")
+                                    {
+                                        <th>Product</th>
+                                        <th class="text-center">Qty</th>
+                                        <th class="text-end">Revenue</th>
+                                        <th class="text-end">Cost</th>
+                                        <th class="text-end">Profit</th>
+                                    }
+                                    else
+                                    {
+                                        <th>Customer</th>
+                                        <th class="text-center">Orders</th>
+                                        <th class="text-end">Total Spent</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.Rows.Any())
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-muted">
+                                            <i class="fas fa-chart-bar fa-2x d-block mb-2"></i>
+                                            No data found for the selected filters.
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var row in Model.Rows)
+                                    {
+                                        <tr>
+                                            @if (Model.ReportType == "Sales")
+                                            {
+                                                <td>@row.Date</td>
+                                                <td>@row.InvoiceNumber</td>
+                                                <td>@row.Customer</td>
+                                                <td class="text-end text-success">R @row.Revenue?.ToString("N2")</td>
+                                                <td>@row.PaymentMethod</td>
+                                            }
+                                            else if (Model.ReportType == "Products" || Model.ReportType == "Profit")
+                                            {
+                                                <td>@row.Product</td>
+                                                <td class="text-center">@row.Quantity</td>
+                                                <td class="text-end">R @row.Revenue?.ToString("N2")</td>
+                                                <td class="text-end">R @row.Cost?.ToString("N2")</td>
+                                                <td class="text-end text-success">R @row.Profit?.ToString("N2")</td>
+                                            }
+                                            else
+                                            {
+                                                <td>@row.Customer</td>
+                                                <td class="text-center">@row.Quantity</td>
+                                                <td class="text-end text-success">R @row.Revenue?.ToString("N2")</td>
+                                            }
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    const revenueData = @Html.Raw(Json.Serialize(Model.RevenueChart.Select(c => c.Value)));
+    const revenueLabels = @Html.Raw(Json.Serialize(Model.RevenueChart.Select(c => c.Label)));
+
+    new Chart(revenueCtx, {
+        type: 'bar',
+        data: {
+            labels: revenueLabels,
+            datasets: [{
+                label: 'Revenue (R)',
+                data: revenueData,
+                backgroundColor: 'rgba(34, 197, 94, 0.5)',
+                borderColor: '#22c55e',
+                borderWidth: 2,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R ' + value.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Payment Chart
+    const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+    const paymentData = @Html.Raw(Json.Serialize(Model.PaymentChart.Select(c => c.Value)));
+    const paymentLabels = @Html.Raw(Json.Serialize(Model.PaymentChart.Select(c => c.Label)));
+
+    const colors = {
+        'Cash': '#22c55e',
+        'Card': '#3b82f6',
+        'Mobile': '#f59e0b',
+        'Credit': '#8b5cf6'
+    };
+
+    const backgroundColors = paymentLabels.map(label => colors[label] || '#94a3b8');
+
+    new Chart(paymentCtx, {
+        type: 'doughnut',
+        data: {
+            labels: paymentLabels,
+            datasets: [{
+                data: paymentData,
+                backgroundColor: backgroundColors,
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Product Chart
+    const productCtx = document.getElementById('productChart').getContext('2d');
+    const productData = @Html.Raw(Json.Serialize(Model.ProductChart.Select(c => c.Value)));
+    const productLabels = @Html.Raw(Json.Serialize(Model.ProductChart.Select(c => c.Label)));
+
+    new Chart(productCtx, {
+        type: 'bar',
+        data: {
+            labels: productLabels,
+            datasets: [{
+                label: 'Revenue (R)',
+                data: productData,
+                backgroundColor: [
+                    'rgba(34, 197, 94, 0.7)',
+                    'rgba(59, 130, 246, 0.7)',
+                    'rgba(245, 158, 11, 0.7)',
+                    'rgba(139, 92, 246, 0.7)',
+                    'rgba(236, 64, 122, 0.7)'
+                ],
+                borderColor: [
+                    '#22c55e',
+                    '#3b82f6',
+                    '#f59e0b',
+                    '#8b5cf6',
+                    '#ec407a'
+                ],
+                borderWidth: 2,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R ' + value.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
