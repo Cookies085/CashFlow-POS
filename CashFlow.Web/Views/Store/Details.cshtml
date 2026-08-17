@@ -1,0 +1,134 @@
+﻿@model CashFlow.Web.ViewModels.StoreViewModel
+
+@{
+    ViewData["Title"] = "Store Details - CashFlow";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-store text-success me-2"></i>Store Details
+                </h2>
+                <div>
+                    <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i>Edit
+                    </a>
+                    <a href="@Url.Action("Index")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back
+                    </a>
+                </div>
+            </div>
+            <hr />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="text-muted">Store Information</h5>
+                            <hr />
+                            <dl class="row">
+                                <dt class="col-sm-4">Store Name</dt>
+                                <dd class="col-sm-8"><strong>@Model.Name</strong></dd>
+
+                                <dt class="col-sm-4">Store Code</dt>
+                                <dd class="col-sm-8"><span class="badge bg-success">@Model.StoreCode</span></dd>
+
+                                <dt class="col-sm-4">Phone</dt>
+                                <dd class="col-sm-8">@(Model.Phone ?? "N/A")</dd>
+
+                                <dt class="col-sm-4">Email</dt>
+                                <dd class="col-sm-8">@(Model.Email ?? "N/A")</dd>
+
+                                <dt class="col-sm-4">Address</dt>
+                                <dd class="col-sm-8">@(Model.Address ?? "N/A")</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-muted">Theme & Branding</h5>
+                            <hr />
+                            <dl class="row">
+                                <dt class="col-sm-4">Theme Mode</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge @(Model.ThemeMode == "dark" ? "bg-dark text-white" : "bg-light text-dark")">
+                                        @Model.ThemeMode
+                                    </span>
+                                </dd>
+
+                                <dt class="col-sm-4">Primary Color</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge" style="background-color: @Model.ThemeColor; color: white; padding: 5px 15px;">
+                                        @Model.ThemeColor
+                                    </span>
+                                </dd>
+
+                                <dt class="col-sm-4">Logo</dt>
+                                <dd class="col-sm-8">
+                                    @if (!string.IsNullOrEmpty(Model.LogoUrl))
+                                    {
+                                        <img src="@Model.LogoUrl" alt="Logo" style="max-height: 60px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px;" />
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No logo uploaded</span>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-4">Status</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge @(Model.IsActive ? "bg-success" : "bg-secondary")">
+                                        @(Model.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle text-success me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i>Edit Store
+                        </a>
+                        <form asp-action="Delete" method="post" onsubmit="return confirm('Are you sure you want to deactivate this store?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="btn btn-danger w-100">
+                                <i class="fas fa-trash me-2"></i>Deactivate Store
+                            </button>
+                        </form>
+                        <a href="@Url.Action("Select", "Store")" class="btn btn-outline-secondary">
+                            <i class="fas fa-exchange-alt me-2"></i>Switch to this Store
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users text-success me-2"></i>Store Users
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">Users assigned to this store will appear here.</p>
+                    <a href="@Url.Action("Index", "Users")?storeId=@Model.Id" class="btn btn-outline-success btn-sm w-100">
+                        <i class="fas fa-users me-2"></i>View Users
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -11,11 +11,13 @@ namespace CashFlow.Web.Controllers;
 public class StockController : BaseController
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly INotificationService _notificationService;
 
-    public StockController(IUnitOfWork unitOfWork, IAuditService auditService)
+    public StockController(IUnitOfWork unitOfWork, IAuditService auditService, INotificationService notificationService)
         : base(auditService)
     {
         _unitOfWork = unitOfWork;
+        _notificationService = notificationService;
     }
 
     // GET: Stock
@@ -144,6 +146,7 @@ public class StockController : BaseController
     public async Task<IActionResult> Receive()
     {
         var organizationId = HttpContext.Session.GetInt32("OrganizationId") ?? 0;
+        var storeId = HttpContext.Session.GetInt32("StoreId");
 
         // Get products for dropdown
         var products = await _unitOfWork.Products
@@ -153,8 +156,16 @@ public class StockController : BaseController
         var suppliers = await _unitOfWork.Suppliers
             .FindAsync(s => s.OrganizationId == organizationId && s.IsActive);
 
+        // Get cash accounts
+        var cashAccounts = await _unitOfWork.CashAccounts
+            .FindAsync(ca => ca.OrganizationId == organizationId && (ca.StoreId == storeId || ca.StoreId == null) && ca.IsActive);
+
         ViewBag.Products = products.OrderBy(p => p.ItemName).ToList();
         ViewBag.Suppliers = suppliers.OrderBy(s => s.Name).ToList();
+        ViewBag.CashAccounts = cashAccounts.OrderBy(ca => ca.AccountName).ToList();
+
+        // Default source types
+        ViewBag.SourceTypes = new List<string> { "Purchase", "Transfer", "Return", "Adjustment", "Donation", "Consignment" };
 
         return View(new StockReceiveViewModel());
     }
@@ -189,8 +200,9 @@ public class StockController : BaseController
                 itemName = p.ItemName,
                 size = p.Size,
                 sellingPrice = p.SellingPrice,
-                currentStock = p.CurrentStock,
                 costPrice = p.CostPrice,
+                currentStock = p.CurrentStock,
+                barcode = p.Barcode,
                 taxRate = p.TaxRate
             })
             .Take(20)
@@ -221,14 +233,21 @@ public class StockController : BaseController
                     return View(model);
                 }
 
-                // Save old stock value for audit
-                var oldStock = product.CurrentStock;
+                // Check if product has expiry date tracking
+                // (This is optional; you can add a flag on product if needed)
 
                 // If unit price is not provided, use the product's selling price
                 var unitPrice = model.UnitPrice ?? product.SellingPrice;
 
+                // Save previous values for audit/notification
+                var previousCost = product.CostPrice;
+                var previousPrice = product.SellingPrice;
+
                 // Update product stock
                 product.CurrentStock += model.Quantity;
+                product.CostPrice = model.UnitCost; // Update cost price
+                if (model.UnitPrice.HasValue)
+                    product.SellingPrice = model.UnitPrice.Value;
                 product.UpdatedAt = DateTime.UtcNow;
 
                 // If supplier is provided, update product supplier
@@ -238,6 +257,11 @@ public class StockController : BaseController
                 }
 
                 _unitOfWork.Products.Update(product);
+
+                // Detect cost increase
+                var costIncreased = previousCost > 0 && model.UnitCost > previousCost;
+                var costDifference = costIncreased ? model.UnitCost - previousCost : 0;
+                var costIncreasePercentage = previousCost > 0 ? (costDifference / previousCost) * 100 : 0;
 
                 // Create stock movement
                 var movement = new StockMovement
@@ -254,23 +278,158 @@ public class StockController : BaseController
                     Notes = model.Notes,
                     StoreId = storeId,
                     CreatedBy = userId,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    // New fields
+                    SourceType = model.SourceType,
+                    ReceiptNumber = model.ReceiptNumber,
+                    PreviousUnitCost = previousCost,
+                    PreviousSellingPrice = previousPrice,
+                    CostIncreased = costIncreased,
+                    IsValidated = false // Will be validated after receipt upload/verification
                 };
+
+                // Handle receipt upload
+                if (model.ReceiptFile != null && model.ReceiptFile.Length > 0)
+                {
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "receipts");
+                    if (!Directory.Exists(uploadsFolder))
+                        Directory.CreateDirectory(uploadsFolder);
+
+                    var uniqueFileName = $"{DateTime.Now:yyyyMMddHHmmss}_{Path.GetFileName(model.ReceiptFile.FileName)}";
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await model.ReceiptFile.CopyToAsync(stream);
+                    }
+
+                    movement.ReceiptImageUrl = $"/uploads/receipts/{uniqueFileName}";
+                }
+
+                // Receipt validation (if both quantity and total provided)
+                if (model.ReceiptQuantity.HasValue && model.ReceiptTotal.HasValue)
+                {
+                    var qtyMatch = model.Quantity == model.ReceiptQuantity.Value;
+                    var amountMatch = Math.Abs(model.TotalCost - model.ReceiptTotal.Value) < 0.01m;
+                    movement.IsValidated = qtyMatch && amountMatch;
+                    movement.ValidationNotes = qtyMatch && amountMatch ?
+                        "Receipt validated successfully." :
+                        $"Validation failed: {(qtyMatch ? "" : "Quantity mismatch. ")}{(amountMatch ? "" : "Amount mismatch.")}";
+                    movement.ValidatedBy = userId;
+                    movement.ValidatedAt = DateTime.UtcNow;
+                }
 
                 await _unitOfWork.StockMovements.AddAsync(movement);
                 await _unitOfWork.SaveChangesAsync();
 
-                // Log audit
-                await LogAuditAsync(
-                    "Receive",
-                    "Stock",
-                    product.Id,
-                    new { OldStock = oldStock },
-                    new { NewStock = product.CurrentStock, Quantity = model.Quantity },
-                    $"Received stock: {model.Quantity} x {product.ItemName}. Stock: {oldStock} → {product.CurrentStock}",
-                    product.ItemCode);
+                // ----- Handle Cash Deduction -----
+                // Only deduct if SourceType is "Purchase" and cash account is selected
+                if (model.SourceType == "Purchase" && model.CashAccountId.HasValue)
+                {
+                    var cashAccount = await _unitOfWork.CashAccounts.GetByIdAsync(model.CashAccountId.Value);
+                    if (cashAccount != null && cashAccount.Balance >= model.TotalCost)
+                    {
+                        // Deduct from cash account
+                        cashAccount.Balance -= model.TotalCost;
+                        cashAccount.UpdatedAt = DateTime.UtcNow;
+                        cashAccount.UpdatedBy = userId;
+                        _unitOfWork.CashAccounts.Update(cashAccount);
 
-                TempData["SuccessMessage"] = $"Stock received successfully for {product.ItemName}!";
+                        // Record transaction
+                        var cashTransaction = new CashTransaction
+                        {
+                            OrganizationId = organizationId,
+                            StoreId = storeId,
+                            CashAccountId = cashAccount.Id,
+                            TransactionType = "Debit",
+                            Amount = model.TotalCost,
+                            Reference = movement.Reference,
+                            Description = $"Stock purchase: {product.ItemName} x {model.Quantity}",
+                            TransactionDate = DateTime.UtcNow,
+                            CreatedAt = DateTime.UtcNow,
+                            CreatedBy = userId
+                        };
+                        await _unitOfWork.CashTransactions.AddAsync(cashTransaction);
+                        await _unitOfWork.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        // Insufficient balance or account not found - log warning but proceed
+                        // Optionally add a notification here
+                        TempData["WarningMessage"] = "Insufficient cash balance. Stock received but cash not deducted.";
+                    }
+                }
+
+                // ----- Send Notifications -----
+                // 1. Cost increase notification
+                if (costIncreased)
+                {
+                    await _notificationService.SendNotificationAsync(
+                        organizationId: organizationId,
+                        userId: null, // all users
+                        storeId: storeId,
+                        title: "⚠️ Cost Increased",
+                        message: $"Cost for {product.ItemName} increased from R{previousCost:N2} to R{model.UnitCost:N2} (+{costIncreasePercentage:N1}%). Please review selling price.",
+                        type: "Warning",
+                        link: $"/Products/Edit/{product.Id}",
+                        reference: $"cost-increase-{product.Id}-{DateTime.Now:yyyyMMdd}"
+                    );
+                }
+
+                // 2. Receipt validation notification
+                if (model.ReceiptQuantity.HasValue && model.ReceiptTotal.HasValue)
+                {
+                    if (!movement.IsValidated)
+                    {
+                        await _notificationService.SendNotificationAsync(
+                            organizationId: organizationId,
+                            userId: null,
+                            storeId: storeId,
+                            title: "⚠️ Receipt Validation Failed",
+                            message: $"Receipt for {product.ItemName} (PO: {movement.Reference}) validation failed. Please check quantities and amounts.",
+                            type: "Danger",
+                            link: $"/Stock/Details/{movement.Id}",
+                            reference: $"receipt-fail-{movement.Id}"
+                        );
+                    }
+                    else
+                    {
+                        await _notificationService.SendNotificationAsync(
+                            organizationId: organizationId,
+                            userId: null,
+                            storeId: storeId,
+                            title: "✅ Receipt Validated",
+                            message: $"Receipt for {product.ItemName} (PO: {movement.Reference}) validated successfully.",
+                            type: "Success",
+                            link: $"/Stock/Details/{movement.Id}",
+                            reference: $"receipt-ok-{movement.Id}"
+                        );
+                    }
+                }
+
+                // 3. Low cash balance notification
+                if (model.CashAccountId.HasValue)
+                {
+                    var cashAccount = await _unitOfWork.CashAccounts.GetByIdAsync(model.CashAccountId.Value);
+                    if (cashAccount != null && cashAccount.Balance < 500)
+                    {
+                        await _notificationService.SendNotificationAsync(
+                            organizationId: organizationId,
+                            userId: null,
+                            storeId: storeId,
+                            title: "💰 Low Cash Balance",
+                            message: $"Cash balance for {cashAccount.AccountName} is low: R{cashAccount.Balance:N2}. Please top up.",
+                            type: "Warning",
+                            link: "/Settings",
+                            reference: $"low-cash-{cashAccount.Id}"
+                        );
+                    }
+                }
+
+                TempData["SuccessMessage"] = $"Stock received successfully for {product.ItemName}! " +
+                    (costIncreased ? $"Cost increased from R{previousCost:N2} to R{model.UnitCost:N2}." : "") +
+                    (movement.IsValidated ? " Receipt validated." : " Receipt pending validation.");
+
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
@@ -624,15 +783,19 @@ public class StockController : BaseController
     private async Task PopulateDropdowns()
     {
         var organizationId = HttpContext.Session.GetInt32("OrganizationId") ?? 0;
+        var storeId = HttpContext.Session.GetInt32("StoreId");
 
         var products = await _unitOfWork.Products
             .FindAsync(p => p.OrganizationId == organizationId && p.IsActive);
-
         var suppliers = await _unitOfWork.Suppliers
             .FindAsync(s => s.OrganizationId == organizationId && s.IsActive);
+        var cashAccounts = await _unitOfWork.CashAccounts
+            .FindAsync(ca => ca.OrganizationId == organizationId && (ca.StoreId == storeId || ca.StoreId == null) && ca.IsActive);
 
         ViewBag.Products = products.OrderBy(p => p.ItemName).ToList();
         ViewBag.Suppliers = suppliers.OrderBy(s => s.Name).ToList();
+        ViewBag.CashAccounts = cashAccounts.OrderBy(ca => ca.AccountName).ToList();
+        ViewBag.SourceTypes = new List<string> { "Purchase", "Transfer", "Return", "Adjustment", "Donation", "Consignment" };
     }
 
     private async Task PopulateProductDropdown()

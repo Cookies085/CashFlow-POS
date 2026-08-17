@@ -26,6 +26,9 @@ public interface IUnitOfWork : IDisposable
     IRepository<Setting> Settings { get; }
     IRepository<StockCount> StockCounts { get; }
     IRepository<StockCountItem> StockCountItems { get; }
+    IRepository<Notification> Notifications { get; }
+    IRepository<CashAccount> CashAccounts { get; }
+    IRepository<CashTransaction> CashTransactions { get; }
 
     Task<IEnumerable<StockMovement>> GetStockMovementsWithProductAsync(int organizationId);
 

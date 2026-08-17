@@ -1,0 +1,95 @@
+﻿@model IEnumerable<CashFlow.Web.ViewModels.StoreViewModel>
+
+@{
+    ViewData["Title"] = "Stores - CashFlow";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-store text-success me-2"></i>Stores
+                </h2>
+                <a href="@Url.Action("Create")" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Add Store
+                </a>
+            </div>
+            <hr />
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-store fa-3x text-muted mb-3"></i>
+            <h4>No stores found</h4>
+            <p class="text-muted">Create your first store to get started.</p>
+            <a href="@Url.Action("Create")" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>Add Store
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var store in Model)
+            {
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-2">
+                                    @if (!string.IsNullOrEmpty(store.LogoUrl))
+                                    {
+                                        <img src="@store.LogoUrl" alt="Logo" style="height: 40px; width: auto;" />
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-store fa-2x text-secondary"></i>
+                                    }
+                                </div>
+                                <h5 class="card-title mb-0">@store.Name</h5>
+                            </div>
+                            <p class="card-text text-muted small">
+                                <i class="fas fa-code me-1"></i>Code: @store.StoreCode
+                                <br />
+                                <i class="fas fa-phone me-1"></i>@(store.Phone ?? "N/A")
+                                <br />
+                                <i class="fas fa-map-pin me-1"></i>@(store.Address ?? "N/A")
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge @(store.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(store.IsActive ? "Active" : "Inactive")
+                                </span>
+                                <div class="btn-group">
+                                    <a href="@Url.Action("Edit", new { id = store.Id })" class="btn btn-sm btn-outline-primary" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="@Url.Action("Details", new { id = store.Id })" class="btn btn-sm btn-outline-info" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to deactivate this store?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@store.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Deactivate">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

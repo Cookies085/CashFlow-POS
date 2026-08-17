@@ -34,6 +34,7 @@ public class UnitOfWork : IUnitOfWork
     private IRepository<Setting>? _settings;
     private IRepository<StockCount>? _stockCounts;
     private IRepository<StockCountItem>? _stockCountItems;
+    private IRepository<Notification>? _notifications;
 
     public UnitOfWork(ApplicationDbContext context)
     {
@@ -102,6 +103,18 @@ public class UnitOfWork : IUnitOfWork
 
     public IRepository<StockCountItem> StockCountItems =>
         _stockCountItems ??= new Repository<StockCountItem>(_context);
+
+    public IRepository<Notification> Notifications =>
+    _notifications ??= new Repository<Notification>(_context);
+
+    private IRepository<CashAccount>? _cashAccounts;
+    private IRepository<CashTransaction>? _cashTransactions;
+
+    public IRepository<CashAccount> CashAccounts =>
+        _cashAccounts ??= new Repository<CashAccount>(_context);
+
+    public IRepository<CashTransaction> CashTransactions =>
+        _cashTransactions ??= new Repository<CashTransaction>(_context);
 
     public async Task<IEnumerable<StockMovement>> GetStockMovementsWithProductAsync(int organizationId)
     {

@@ -502,4 +502,67 @@ public class ProductsController : BaseController
 
         return View(model);
     }
+
+    // GET: Products/ExpiryAlerts
+    // GET: Products/ExpiryAlerts
+    public async Task<IActionResult> ExpiryAlerts(string? filter = null)
+    {
+        var organizationId = HttpContext.Session.GetInt32("OrganizationId") ?? 0;
+        var storeId = HttpContext.Session.GetInt32("StoreId");
+
+        // Get all stock movements with expiry dates and positive stock
+        var movements = await _unitOfWork.StockMovements
+            .FindAsync(sm => sm.ExpiryDate.HasValue && sm.Quantity > 0);
+
+        if (storeId.HasValue)
+        {
+            movements = movements.Where(sm => sm.StoreId == storeId.Value || sm.StoreId == null);
+        }
+
+        var alerts = new List<ExpiryAlertViewModel>();
+
+        foreach (var movement in movements)
+        {
+            var product = await _unitOfWork.Products.GetByIdAsync(movement.ProductId);
+            if (product == null || !product.IsActive) continue;
+
+            var daysUntilExpiry = (movement.ExpiryDate.Value.Date - DateTime.UtcNow.Date).Days;
+
+            alerts.Add(new ExpiryAlertViewModel
+            {
+                ProductId = product.Id,
+                ItemCode = product.ItemCode,
+                ItemName = product.ItemName,
+                BatchNumber = movement.BatchNumber ?? "N/A",
+                Quantity = movement.Quantity,
+                ExpiryDate = movement.ExpiryDate.Value,
+                DaysUntilExpiry = daysUntilExpiry,
+                Status = daysUntilExpiry < 0 ? "Expired" :
+                         daysUntilExpiry <= 3 ? "Urgent" :
+                         daysUntilExpiry <= 7 ? "Warning" :
+                         daysUntilExpiry <= 30 ? "Notice" : "OK"
+            });
+        }
+
+        // Calculate totals before filtering
+        ViewBag.TotalExpired = alerts.Count(a => a.DaysUntilExpiry < 0);
+        ViewBag.TotalExpiring = alerts.Count(a => a.DaysUntilExpiry >= 0 && a.DaysUntilExpiry <= 30);
+
+        // Apply filter
+        if (filter == "expired")
+        {
+            alerts = alerts.Where(a => a.DaysUntilExpiry < 0).ToList();
+        }
+        else if (filter == "expiring")
+        {
+            alerts = alerts.Where(a => a.DaysUntilExpiry >= 0 && a.DaysUntilExpiry <= 30).ToList();
+        }
+        // else show all
+
+        ViewBag.ActiveFilter = filter;
+
+        alerts = alerts.OrderBy(a => a.DaysUntilExpiry).ToList();
+
+        return View(alerts);
+    }
 }

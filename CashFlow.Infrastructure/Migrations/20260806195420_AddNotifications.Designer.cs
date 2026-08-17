@@ -4,6 +4,7 @@ using CashFlow.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CashFlow.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260806195420_AddNotifications")]
+    partial class AddNotifications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -83,101 +86,6 @@ namespace CashFlow.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("AuditLogs");
-                });
-
-            modelBuilder.Entity("CashFlow.Core.Entities.CashAccount", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AccountName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Balance")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("OrganizationId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("StoreId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("UpdatedBy")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrganizationId");
-
-                    b.HasIndex("StoreId");
-
-                    b.ToTable("CashAccounts");
-                });
-
-            modelBuilder.Entity("CashFlow.Core.Entities.CashTransaction", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("CashAccountId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("OrganizationId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Reference")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("StoreId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("TransactionDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("TransactionType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CashAccountId");
-
-                    b.HasIndex("OrganizationId");
-
-                    b.HasIndex("StoreId");
-
-                    b.ToTable("CashTransactions");
                 });
 
             modelBuilder.Entity("CashFlow.Core.Entities.Customer", b =>
@@ -1056,9 +964,6 @@ namespace CashFlow.Infrastructure.Migrations
                     b.Property<string>("BatchNumber")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("CostIncreased")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1067,9 +972,6 @@ namespace CashFlow.Infrastructure.Migrations
 
                     b.Property<DateTime?>("ExpiryDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsValidated")
-                        .HasColumnType("bit");
 
                     b.Property<DateTime>("MovementDate")
                         .HasColumnType("datetime2");
@@ -1080,28 +982,13 @@ namespace CashFlow.Infrastructure.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("PreviousSellingPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal?>("PreviousUnitCost")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
-                    b.Property<string>("ReceiptImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ReceiptNumber")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Reference")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SourceType")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("StoreId")
@@ -1112,15 +999,6 @@ namespace CashFlow.Infrastructure.Migrations
 
                     b.Property<decimal?>("UnitPrice")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime?>("ValidatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("ValidatedBy")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ValidationNotes")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -1330,49 +1208,6 @@ namespace CashFlow.Infrastructure.Migrations
                     b.Navigation("Store");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("CashFlow.Core.Entities.CashAccount", b =>
-                {
-                    b.HasOne("CashFlow.Core.Entities.Organization", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("CashFlow.Core.Entities.Store", "Store")
-                        .WithMany()
-                        .HasForeignKey("StoreId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Organization");
-
-                    b.Navigation("Store");
-                });
-
-            modelBuilder.Entity("CashFlow.Core.Entities.CashTransaction", b =>
-                {
-                    b.HasOne("CashFlow.Core.Entities.CashAccount", "CashAccount")
-                        .WithMany()
-                        .HasForeignKey("CashAccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("CashFlow.Core.Entities.Organization", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("CashFlow.Core.Entities.Store", "Store")
-                        .WithMany()
-                        .HasForeignKey("StoreId");
-
-                    b.Navigation("CashAccount");
-
-                    b.Navigation("Organization");
-
-                    b.Navigation("Store");
                 });
 
             modelBuilder.Entity("CashFlow.Core.Entities.Customer", b =>

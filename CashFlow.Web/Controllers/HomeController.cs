@@ -178,18 +178,48 @@ public class HomeController : BaseController
 
         model.SalesChart = chartData;
 
+        // =============================================
+        // EXPIRY ALERTS - ADD THIS SECTION
+        // =============================================
+        var expiryMovements = await _unitOfWork.StockMovements
+            .FindAsync(sm => sm.ExpiryDate.HasValue && sm.Quantity > 0);
+
+        if (storeId.HasValue)
+        {
+            expiryMovements = expiryMovements.Where(sm => sm.StoreId == storeId.Value || sm.StoreId == null);
+        }
+
+        var expiringItems = new List<ExpiryAlertViewModel>();
+        foreach (var movement in expiryMovements)
+        {
+            var product = await _unitOfWork.Products.GetByIdAsync(movement.ProductId);
+            if (product == null || !product.IsActive) continue;
+
+            var days = (movement.ExpiryDate.Value.Date - DateTime.UtcNow.Date).Days;
+            if (days < 0)
+            {
+                model.ExpiredCount++;
+            }
+            else if (days <= 30)
+            {
+                model.ExpiringCount++;
+                expiringItems.Add(new ExpiryAlertViewModel
+                {
+                    ProductId = product.Id,
+                    ItemName = product.ItemName,
+                    ItemCode = product.ItemCode,
+                    DaysUntilExpiry = days,
+                    ExpiryDate = movement.ExpiryDate.Value,
+                    BatchNumber = movement.BatchNumber ?? "N/A",
+                    Quantity = movement.Quantity
+                });
+            }
+        }
+        model.HasExpiryAlerts = model.ExpiredCount > 0 || model.ExpiringCount > 0;
+        model.UrgentExpiries = expiringItems.OrderBy(e => e.DaysUntilExpiry).Take(5).ToList();
+
         ViewBag.StoreName = HttpContext.Session.GetString("StoreName") ?? "Main Store";
         ViewBag.UserName = HttpContext.Session.GetString("UserFullName") ?? "User";
-
-        // Log dashboard view
-        await LogAuditAsync(
-            "View",
-            "Dashboard",
-            null,
-            null,
-            null,
-            $"User viewed dashboard. Today's sales: {model.TodaySales:C}, Total orders: {model.TodayOrders}",
-            null);
 
         return View(model);
     }

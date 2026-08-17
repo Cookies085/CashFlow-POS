@@ -31,8 +31,17 @@ public class DashboardViewModel
     // Alerts
     public bool HasLowStock => LowStockItems > 0;
     public bool HasOutOfStock => OutOfStockItems > 0;
+
+    // NEW: Expiry Alerts
+    public bool HasExpiryAlerts { get; set; }
+    public int ExpiringCount { get; set; }
+    public int ExpiredCount { get; set; }
+    public List<ExpiryAlertViewModel>? UrgentExpiries { get; set; }
 }
 
+// =============================================
+// Nested ViewModel Classes
+// =============================================
 public class RecentSaleViewModel
 {
     public int Id { get; set; }

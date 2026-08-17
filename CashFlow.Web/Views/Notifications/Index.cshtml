@@ -1,0 +1,105 @@
+﻿@model IEnumerable<CashFlow.Core.Entities.Notification>
+
+@{
+    ViewData["Title"] = "Notifications - CashFlow";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-bell text-success me-2"></i>Notifications
+                </h2>
+                <div>
+                    <button class="btn btn-outline-success" onclick="markAllAsRead()">
+                        <i class="fas fa-check-double me-2"></i>Mark All as Read
+                    </button>
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back
+                    </a>
+                </div>
+            </div>
+            <hr />
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+            <h4>No notifications</h4>
+            <p class="text-muted">You're all caught up!</p>
+        </div>
+    }
+    else
+    {
+        <div class="list-group shadow-sm">
+            @foreach (var notification in Model)
+            {
+                var typeClass = notification.Type switch
+                {
+                    "Danger" => "bg-danger text-white",
+                    "Warning" => "bg-warning text-dark",
+                    "Success" => "bg-success text-white",
+                    _ => "bg-info text-white"
+                };
+                <div class="list-group-item list-group-item-action @(notification.IsRead ? "" : "bg-light")"
+                     data-id="@notification.Id">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <span class="badge @typeClass me-2">@notification.Type</span>
+                            <span class="fw-bold">@notification.Title</span>
+                            <p class="mb-1 mt-1">@notification.Message</p>
+                            <small class="text-muted">@notification.CreatedAt.ToString("dd MMM yyyy HH:mm")</small>
+                        </div>
+                        <div>
+                            @if (!notification.IsRead)
+                            {
+                                <button class="btn btn-sm btn-outline-success" onclick="markAsRead(@notification.Id)">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            }
+                            @if (!string.IsNullOrEmpty(notification.Link))
+                            {
+                                <a href="@notification.Link" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-arrow-right"></i>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<script>
+    function markAsRead(id) {
+        $.ajax({
+            url: '@Url.Action("MarkAsRead", "Notifications")',
+            type: 'POST',
+            data: { id: id },
+            headers: {
+                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+            },
+            success: function() {
+                location.reload();
+            }
+        });
+    }
+
+    function markAllAsRead() {
+        if (!confirm('Mark all notifications as read?')) return;
+        $.ajax({
+            url: '@Url.Action("MarkAllAsRead", "Notifications")',
+            type: 'POST',
+            headers: {
+                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+            },
+            success: function() {
+                location.reload();
+            }
+        });
+    }
+</script>

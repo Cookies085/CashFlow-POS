@@ -1,6 +1,8 @@
 ﻿using CashFlow.Core.Entities;
+using CashFlow.Core.Enums;
 using CashFlow.Core.Interfaces;
 using CashFlow.Infrastructure.Services;
+using CashFlow.Web.Filters;
 using CashFlow.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
@@ -17,6 +19,222 @@ public class StoreController : BaseController
     {
         _unitOfWork = unitOfWork;
         _httpContextAccessor = httpContextAccessor;
+    }
+
+    private string GenerateStoreCode(string storeName)
+    {
+        var prefix = storeName.Length >= 3 ? storeName.Substring(0, 3).ToUpper() : storeName.ToUpper().PadRight(3, 'X');
+        var random = new Random().Next(100, 999);
+        return $"{prefix}{random}";
+    }
+
+    // GET: Store/Index - Manage stores (Admin/SuperAdmin only)
+    [AuthorizeRole(UserRole.SuperAdmin, UserRole.Admin)]
+    public async Task<IActionResult> Index()
+    {
+        var organizationId = HttpContext.Session.GetInt32("OrganizationId") ?? 0;
+        var stores = await _unitOfWork.Stores
+            .FindAsync(s => s.OrganizationId == organizationId);
+
+        var viewModel = stores.Select(s => new StoreViewModel
+        {
+            Id = s.Id,
+            Name = s.Name,
+            Address = s.Address,
+            Phone = s.Phone,
+            Email = s.Email,
+            StoreCode = s.StoreCode,
+            LogoUrl = s.LogoUrl,
+            ThemeColor = s.ThemeColor ?? "#0d5c1f",
+            ThemeMode = s.ThemeMode ?? "light",
+            IsActive = s.IsActive
+        }).ToList();
+
+        return View(viewModel);
+    }
+
+    // GET: Store/Create
+    [AuthorizeRole(UserRole.SuperAdmin, UserRole.Admin)]
+    public IActionResult Create()
+    {
+        return View(new StoreViewModel());
+    }
+
+    // POST: Store/Create
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [AuthorizeRole(UserRole.SuperAdmin, UserRole.Admin)]
+    public async Task<IActionResult> Create(StoreViewModel model)
+    {
+        if (ModelState.IsValid)
+        {
+            var organizationId = HttpContext.Session.GetInt32("OrganizationId") ?? 0;
+            var userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+
+            // Check if store code already exists
+            var existingStore = await _unitOfWork.Stores
+                .FirstOrDefaultAsync(s => s.OrganizationId == organizationId && s.StoreCode == model.StoreCode);
+            if (existingStore != null)
+            {
+                ModelState.AddModelError("StoreCode", "A store with this code already exists.");
+                return View(model);
+            }
+
+            // Generate store code if not provided
+            if (string.IsNullOrEmpty(model.StoreCode))
+            {
+                model.StoreCode = GenerateStoreCode(model.Name);
+            }
+
+            var store = new Store
+            {
+                OrganizationId = organizationId,
+                Name = model.Name,
+                Address = model.Address,
+                Phone = model.Phone,
+                Email = model.Email,
+                StoreCode = model.StoreCode,
+                LogoUrl = model.LogoUrl,
+                ThemeColor = model.ThemeColor ?? "#0d5c1f",
+                ThemeMode = model.ThemeMode ?? "light",
+                Timezone = "Africa/Johannesburg",
+                IsActive = model.IsActive,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = userId
+            };
+
+            await _unitOfWork.Stores.AddAsync(store);
+            await _unitOfWork.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Store '{store.Name}' created successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+
+        return View(model);
+    }
+
+    // GET: Store/Edit/5
+    [AuthorizeRole(UserRole.SuperAdmin, UserRole.Admin)]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var store = await _unitOfWork.Stores.GetByIdAsync(id);
+        if (store == null)
+        {
+            return NotFound();
+        }
+
+        var model = new StoreViewModel
+        {
+            Id = store.Id,
+            Name = store.Name,
+            Address = store.Address,
+            Phone = store.Phone,
+            Email = store.Email,
+            StoreCode = store.StoreCode,
+            LogoUrl = store.LogoUrl,
+            ThemeColor = store.ThemeColor ?? "#0d5c1f",
+            ThemeMode = store.ThemeMode ?? "light",
+            IsActive = store.IsActive
+        };
+
+        return View(model);
+    }
+
+    // POST: Store/Edit/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [AuthorizeRole(UserRole.SuperAdmin, UserRole.Admin)]
+    public async Task<IActionResult> Edit(int id, StoreViewModel model)
+    {
+        if (id != model.Id)
+        {
+            return NotFound();
+        }
+
+        if (ModelState.IsValid)
+        {
+            var store = await _unitOfWork.Stores.GetByIdAsync(id);
+            if (store == null)
+            {
+                return NotFound();
+            }
+
+            var organizationId = HttpContext.Session.GetInt32("OrganizationId") ?? 0;
+
+            // Check if store code already exists (excluding current store)
+            var existingStore = await _unitOfWork.Stores
+                .FirstOrDefaultAsync(s => s.OrganizationId == organizationId && s.StoreCode == model.StoreCode && s.Id != id);
+            if (existingStore != null)
+            {
+                ModelState.AddModelError("StoreCode", "A store with this code already exists.");
+                return View(model);
+            }
+
+            // Update store
+            store.Name = model.Name;
+            store.Address = model.Address;
+            store.Phone = model.Phone;
+            store.Email = model.Email;
+            store.StoreCode = model.StoreCode;
+            store.LogoUrl = model.LogoUrl;
+            store.ThemeColor = model.ThemeColor ?? "#0d5c1f";
+            store.ThemeMode = model.ThemeMode ?? "light";
+            store.IsActive = model.IsActive;
+
+            _unitOfWork.Stores.Update(store);
+            await _unitOfWork.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Store '{store.Name}' updated successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+
+        return View(model);
+    }
+
+    // GET: Store/Details/5
+    [AuthorizeRole(UserRole.SuperAdmin, UserRole.Admin)]
+    public async Task<IActionResult> Details(int id)
+    {
+        var store = await _unitOfWork.Stores.GetByIdAsync(id);
+        if (store == null)
+        {
+            return NotFound();
+        }
+
+        var model = new StoreViewModel
+        {
+            Id = store.Id,
+            Name = store.Name,
+            Address = store.Address,
+            Phone = store.Phone,
+            Email = store.Email,
+            StoreCode = store.StoreCode,
+            LogoUrl = store.LogoUrl,
+            ThemeColor = store.ThemeColor ?? "#0d5c1f",
+            ThemeMode = store.ThemeMode ?? "light",
+            IsActive = store.IsActive
+        };
+
+        return View(model);
+    }
+
+    // POST: Store/Delete/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [AuthorizeRole(UserRole.SuperAdmin, UserRole.Admin)]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var store = await _unitOfWork.Stores.GetByIdAsync(id);
+        if (store != null)
+        {
+            // Soft delete - just deactivate
+            store.IsActive = false;
+            _unitOfWork.Stores.Update(store);
+            await _unitOfWork.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"Store '{store.Name}' deactivated successfully.";
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 
     // GET: Store/Select
@@ -151,38 +369,5 @@ public class StoreController : BaseController
         }
 
         return View(model);
-    }
-
-    // GET: Store/Details
-    public async Task<IActionResult> Details(int id)
-    {
-        var store = await _unitOfWork.Stores.GetByIdAsync(id);
-        if (store == null)
-        {
-            return NotFound();
-        }
-
-        // Log store details view
-        await LogAuditAsync(
-            "View",
-            "StoreDetails",
-            store.Id,
-            null,
-            store,
-            $"Store details viewed: {store.Name} (Code: {store.StoreCode})",
-            store.StoreCode);
-
-        return Json(new
-        {
-            id = store.Id,
-            name = store.Name,
-            address = store.Address,
-            phone = store.Phone,
-            email = store.Email,
-            storeCode = store.StoreCode,
-            logoUrl = store.LogoUrl,
-            themeColor = store.ThemeColor,
-            themeMode = store.ThemeMode
-        });
     }
 }

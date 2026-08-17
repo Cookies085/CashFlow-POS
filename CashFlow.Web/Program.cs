@@ -2,6 +2,7 @@ using CashFlow.Core.Interfaces;
 using CashFlow.Infrastructure.Data;
 using CashFlow.Infrastructure.Repositories;
 using CashFlow.Infrastructure.Services;
+using CashFlow.Web.Services;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Infrastructure;
 
@@ -40,7 +41,9 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
-builder.Services.AddScoped<ISettingsService, SettingsService>();  
+builder.Services.AddScoped<ISettingsService, SettingsService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddHostedService<ExpiryNotificationService>();
 
 var app = builder.Build();
 

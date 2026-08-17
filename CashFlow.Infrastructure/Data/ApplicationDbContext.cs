@@ -33,7 +33,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<Setting> Settings { get; set; }
     public DbSet<StockCount> StockCounts { get; set; }
     public DbSet<StockCountItem> StockCountItems { get; set; }
-
+    public DbSet<Notification> Notifications { get; set; }
+    public DbSet<CashAccount> CashAccounts { get; set; }
+    public DbSet<CashTransaction> CashTransactions { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -372,6 +374,26 @@ public class ApplicationDbContext : DbContext
             .HasOne(sci => sci.Product)
             .WithMany()
             .HasForeignKey(sci => sci.ProductId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // CashAccount - Organization
+        modelBuilder.Entity<CashAccount>()
+            .HasOne(ca => ca.Organization)
+            .WithMany()
+            .HasForeignKey(ca => ca.OrganizationId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CashAccount>()
+            .HasOne(ca => ca.Store)
+            .WithMany()
+            .HasForeignKey(ca => ca.StoreId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // CashTransaction - CashAccount
+        modelBuilder.Entity<CashTransaction>()
+            .HasOne(ct => ct.CashAccount)
+            .WithMany()
+            .HasForeignKey(ct => ct.CashAccountId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
